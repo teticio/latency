@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script>
+            async function hits() {
+                var startTime = performance.now()
+                result = await fetch("/hits");
+                text = await result.text();
+                var endTime = performance.now()
+                document.getElementById("hits").innerHTML = `${text} - ${(endTime - startTime).toFixed(2)}ms`;
+            }
+        </script>
+    </head>
+    <body>
+        <button type="button" onClick="hits()">Click Me!</button>
+        <span id="hits"></span>
+    </body>
+</html>
