@@ -1,2 +1,5 @@
-Pipfile.lock
+.terraform*
+terraform.tfstate*
+terraform.tfvars
 Pipfile
+Pipfile.lock

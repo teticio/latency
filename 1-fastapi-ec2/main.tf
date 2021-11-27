@@ -1,17 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.0"
-    }
-  }
-}
-
-provider "aws" {
-  profile = "default"
-  region  = var.region
-}
-
 resource "aws_security_group" "app" {
   name = "app"
 
@@ -66,12 +52,12 @@ resource "aws_instance" "ec2" {
   }
 
   provisioner "file" {
-    source      = "src"
+    source      = "${path.module}/src"
     destination = "~/src"
   }
 
   provisioner "file" {
-    source      = "../common"
+    source      = "${path.root}/common"
     destination = "~/common"
   }
 
