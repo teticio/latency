@@ -1,5 +1,6 @@
 .terraform*
 terraform.tfstate*
 terraform.tfvars
+builds
 Pipfile
 Pipfile.lock

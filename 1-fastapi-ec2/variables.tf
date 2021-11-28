@@ -1,11 +1,6 @@
 variable "tag" {
-  type    = string
-  default = "EC2"
-}
-
-variable "region" {
-  type    = string
-  default = "eu-west-2"
+  type = string
+  default = "latency-fastapi-ec2"
 }
 
 variable "ami" {

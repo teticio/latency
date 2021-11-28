@@ -1,4 +1,4 @@
 output "url" {
   description = "app endpoint"
-  value = module.app.url
+  value       = module.app.url
 }

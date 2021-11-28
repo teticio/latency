@@ -25,7 +25,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "app"
+    Name = "${var.tag}"
   }
 }
 
