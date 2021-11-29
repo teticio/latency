@@ -25,7 +25,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "${var.tag}"
+    Name = var.tag
   }
 }
 
@@ -35,7 +35,7 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids = [aws_security_group.app.id]
 
   tags = {
-    Name = "${var.tag}"
+    Name = var.tag
   }
 
   root_block_device {

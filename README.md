@@ -16,9 +16,9 @@ in `main.tf` to point to the corresponding directory.
 
 To test the performance over the internet run
 ```
-python test\latency.py http://... 1000
+python test\latency.py <URL>/hits 1000
 ```
 providing the application URL and the number of times to increment the counter in succession. Alternatively, you can invoke the test from a Lambda function. Build the Lambda function by running `terraform apply` in the `test` directory and launch the test with
 ```
-python test\lambda-latency.py http://... 1000
+python test\lambda-latency.py <URL>/hits 1000
 ```

@@ -1,5 +1,5 @@
 variable "tag" {
-  type = string
+  type    = string
   default = "latency-fastapi-ec2"
 }
 
