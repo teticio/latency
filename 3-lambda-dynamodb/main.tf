@@ -52,11 +52,7 @@ module "lambda_function" {
 	"Statement": [{
     "Effect": "Allow",
     "Action": [
-      "dynamodb:BatchGetItem",
       "dynamodb:GetItem",
-      "dynamodb:Query",
-      "dynamodb:Scan",
-      "dynamodb:BatchWriteItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem"
     ],
@@ -83,12 +79,6 @@ module "api_gateway" {
   description            = "app"
   protocol_type          = "HTTP"
   create_api_domain_name = false
-
-  cors_configuration = {
-    allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
-    allow_methods = ["*"]
-    allow_origins = ["*"]
-  }
 
   integrations = {
     "GET /" = {

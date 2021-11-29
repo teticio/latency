@@ -1,9 +1,3 @@
-# TODO
-# lambda + s3
-# lambda + dynamodb
-# step function
-# alb
-
 terraform {
   required_providers {
     aws = {
@@ -19,7 +13,7 @@ provider "aws" {
 }
 
 module "app" {
-  source   = "./1-fastapi-ec2"
+  #  source   = "./1-fastapi-ec2"
   #  source = "./2-lambda-s3"
-  #  source = "./3-lambda-dynamodb"
+  source = "./3-lambda-dynamodb"
 }

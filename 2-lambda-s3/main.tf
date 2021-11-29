@@ -64,12 +64,6 @@ module "api_gateway" {
   protocol_type          = "HTTP"
   create_api_domain_name = false
 
-  cors_configuration = {
-    allow_headers = ["content-type", "x-amz-date", "authorization", "x-api-key", "x-amz-security-token", "x-amz-user-agent"]
-    allow_methods = ["*"]
-    allow_origins = ["*"]
-  }
-
   integrations = {
     "GET /" = {
       integration_uri    = "https://${aws_s3_bucket.bucket.id}.s3.${data.aws_region.current.name}.amazonaws.com/${aws_s3_bucket_object.index.id}"
