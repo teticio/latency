@@ -19,9 +19,7 @@ provider "aws" {
 }
 
 module "app" {
-  #  source   = "./1-fastapi-ec2"
-  #  key_name = var.key_name
-  #  key_path = var.key_path
-
-  source = "./2-lambda-s3"
+  source   = "./1-fastapi-ec2"
+  #  source = "./2-lambda-s3"
+  #  source = "./3-lambda-dynamodb"
 }

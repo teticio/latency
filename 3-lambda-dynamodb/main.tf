@@ -1,7 +1,7 @@
 data "aws_region" "current" {}
 
 resource "aws_s3_bucket" "bucket" {
-  bucket        = "latency-lambda-s3"
+  bucket        = "latency-lambda-dynamodb"
   acl           = "private"
   force_destroy = true
 
@@ -22,6 +22,21 @@ resource "aws_s3_bucket_object" "index" {
   }
 }
 
+resource "aws_dynamodb_table" "dynamodb" {
+  name           = "latency"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "id"
+
+  attribute {
+    name = "id"
+    type = "N"
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
 module "lambda_function" {
   source             = "terraform-aws-modules/lambda/aws"
   function_name      = "hits"
@@ -33,15 +48,20 @@ module "lambda_function" {
 
   policy_json = <<EOF
 {
-  "Version" : "2012-10-17",
-  "Statement" : [
-    {
-      "Sid" : "AllObjectActions",
-      "Effect" : "Allow",
-      "Action" : "s3:*Object",
-      "Resource" : ["arn:aws:s3:::${aws_s3_bucket.bucket.bucket}/*"]
-    }
-  ]
+	"Version": "2012-10-17",
+	"Statement": [{
+    "Effect": "Allow",
+    "Action": [
+      "dynamodb:BatchGetItem",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ],
+    "Resource": "${aws_dynamodb_table.dynamodb.arn}"
+  }]
 }
   EOF
 

@@ -1,3 +1,13 @@
+resource "tls_private_key" "this" {
+  algorithm = "RSA"
+}
+
+module "key_pair" {
+  source     = "terraform-aws-modules/key-pair/aws"
+  key_name   = "latency"
+  public_key = tls_private_key.this.public_key_openssh
+}
+
 resource "aws_security_group" "app" {
   name = "app"
 
@@ -43,11 +53,11 @@ resource "aws_instance" "ec2" {
     volume_size = var.volume_size
   }
 
-  key_name = var.key_name
+  key_name = "latency"
 
   connection {
     user        = "ubuntu"
-    private_key = file("${var.key_path}")
+    private_key = tls_private_key.this.private_key_pem
     host        = aws_instance.ec2.public_ip
   }
 

@@ -12,7 +12,11 @@ in the root directory. The application URL will be output once the process is co
 ```
 in `main.tf` to point to the corresponding directory.
 
-* **FastAPI + EC2** (`1-fastapi-ec2`). Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter.
+* **FastAPI + EC2** (`1-fastapi-ec2`). Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter. The server is exposed on port 8000.
+
+* **Lambda + S3** (`2-lambda-s3`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Lambda function which stores the counter as an object in a S3 bucket.
+
+* **Lambda + DynamoDB** (`3-lambda-dynamodb`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Lambda function which stores the counter as an item in a DynamoDB table.
 
 To test the performance over the internet run
 ```

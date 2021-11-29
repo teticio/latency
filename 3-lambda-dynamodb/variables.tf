@@ -1,4 +1,4 @@
 variable "tag" {
   type    = string
-  default = "latency-lambda-s3"
+  default = "latency-dynamodb-s3"
 }
