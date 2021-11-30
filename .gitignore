@@ -4,3 +4,6 @@ terraform.tfvars
 builds
 Pipfile
 Pipfile.lock
+package.json
+package-lock.json
+node_modules

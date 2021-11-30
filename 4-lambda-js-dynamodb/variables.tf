@@ -1,4 +1,4 @@
 variable "tag" {
   type    = string
-  default = "latency-dynamodb"
+  default = "latency-js-dynamodb"
 }
