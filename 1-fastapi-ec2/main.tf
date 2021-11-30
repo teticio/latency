@@ -6,6 +6,10 @@ module "key_pair" {
   source     = "terraform-aws-modules/key-pair/aws"
   key_name   = "latency"
   public_key = tls_private_key.this.public_key_openssh
+
+  tags = {
+    Name = var.tag
+  }
 }
 
 resource "aws_security_group" "app" {
@@ -43,17 +47,12 @@ resource "aws_instance" "ec2" {
   ami                    = var.ami
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.app.id]
-
-  tags = {
-    Name = var.tag
-  }
+  key_name               = "latency"
 
   root_block_device {
     volume_type = "gp2"
     volume_size = var.volume_size
   }
-
-  key_name = "latency"
 
   connection {
     user        = "ubuntu"
@@ -78,5 +77,9 @@ resource "aws_instance" "ec2" {
       "chmod +x bootstrap.sh",
       "./bootstrap.sh"
     ]
+  }
+
+  tags = {
+    Name = var.tag
   }
 }
