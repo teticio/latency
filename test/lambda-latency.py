@@ -1,12 +1,18 @@
+import os
+import hcl
 import json
 import boto3
 import argparse
 
 if __name__ == '__main__':
+    with open(os.path.join(os.path.dirname(__file__), 'variables.tf')) as file:
+        variables = hcl.load(file)
+    region = variables['variable']['region']['default']
     parser = argparse.ArgumentParser(description="Test latency of URL")
     parser.add_argument('url', type=str, help="URL to test")
     parser.add_argument('hits', type=int, help="Number of hits")
     args = parser.parse_args()
+    boto3.setup_default_session(region_name=region)
     lambda_client = boto3.client('lambda')
     ms = lambda_client.invoke(FunctionName='test-latency',
                               InvocationType='RequestResponse',
