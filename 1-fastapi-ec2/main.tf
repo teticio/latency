@@ -12,11 +12,11 @@ module "key_pair" {
   }
 }
 
-resource "aws_security_group" "app" {
-  name = "app"
+resource "aws_security_group" "latency" {
+  name = "latency"
 
   ingress {
-    description = "app"
+    description = "API"
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
@@ -46,7 +46,7 @@ resource "aws_security_group" "app" {
 resource "aws_instance" "ec2" {
   ami                    = var.ami
   instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.app.id]
+  vpc_security_group_ids = [aws_security_group.latency.id]
   key_name               = "latency"
 
   root_block_device {

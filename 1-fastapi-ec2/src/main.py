@@ -11,4 +11,10 @@ async def get_hits():
     hits = hits + 1
     return hits
 
+
+@app.get('/healthz')
+async def health_check():
+    return {'status': 'pass'}
+
+
 app.mount('/', StaticFiles(directory='common', html=True), name='index')
