@@ -5,12 +5,12 @@ from timeit import default_timer as timer
 
 
 async def test_latency(url, hits=1000):
-    start = timer()
-    for _ in range(hits):
-        async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
+        start = timer()
+        for _ in range(hits):
             async with session.get(url) as response:
                 text = await response.text()
-    end = timer()
+        end = timer()
     return (end - start) * 1000 / hits
 
 
