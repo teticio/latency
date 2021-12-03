@@ -33,7 +33,7 @@ python test\lambda-latency.py <URL>/hits 1000
 
 ## Results
 
-The cost estimates are based on current AWS pricing for the region `eu-west-2` and don't take into account network usage. I have included EC2, Lambda, S3, DynamoDB, ELB, EFS and API Gateway costs.
+The cost estimates are based on current AWS pricing for the region `eu-west-2` and don't take into account network usage. I have included EC2, Lambda, S3, DynamoDB, EFS and API Gateway costs.
 
 | Architecture         | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
 |----------------------|:--------------------:|:----------------:|:--------------------------:|
@@ -43,4 +43,4 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 | Lambda JS + DynamoDB | 105                  | N/A              | 3.39                       |
 | Fargate Spot ECS     | 16                   | 3.11\*           | N/A                        |
 
-\* I haven't included the Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.
+\* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.
