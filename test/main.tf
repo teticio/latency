@@ -17,7 +17,7 @@ module "lambda_function" {
   function_name = "test-latency"
   handler       = "latency.lambda_handler"
   runtime       = "python3.8"
-  timeout       = 30
+  timeout       = 300
 
   source_path = [
     "./latency.py",

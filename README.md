@@ -1,6 +1,6 @@
 ## Latency
 
-The purpose of this repo is to compare the performance of various architectures for a simple web applciation with a backend that keeps track of the number of times it has been called.
+The purpose of this repo is to compare the performance of various architectures for a simple web application with a backend that keeps track of the number of times it has been called.
 
 Each architecture can be built by running
 ```
@@ -12,7 +12,7 @@ in the root directory. The application URL will be output once the process is co
 ```
 in `main.tf` to point to the corresponding directory.
 
-* **FastAPI + EC2** (`1-fastapi-ec2`). Serverful architecture. Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter. The server is exposed on port 8000.
+* **FastAPI + EC2** (`1-fastapi-ec2`). "Serverful" architecture. Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter. The server is exposed on port 8000.
 
 * **Lambda + S3** (`2-lambda-s3`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Lambda function which stores the counter as an object in a S3 bucket. Note that AWS resuses Lambda functions as much as possible, meaning that moving as much initialization code outside of the handler function itself improves the latency significantly.
 
@@ -20,7 +20,7 @@ in `main.tf` to point to the corresponding directory.
 
 * **Lambda JS + DynamoDB** (`4-lambda-js-dynamodb`). Same as above, but with a JavaScript Lambda function.
 
-* **Fargate ECS** (`5-fargate-ecs`). Serverless architecture. Creates a Fargate ECS service and Load Balancer on the default VPC (for simplicity) that runs the FastAPI as a task inside a container. One advantage of using Fargate is that it can be configured to use spot instances which are 70% cheaper than on-demand instances. As spot instances can be terminated at any time (although, in practice, this is only about 5% of the time), the app persists its state on Elastic File Storage (EFS). You can build the Docker image yourself by running `docker build .` in the root directory of the repository.
+* **Fargate ECS** (`5-fargate-ecs`). Serverless architecture. Creates a Fargate ECS service and Load Balancer on the default VPC (for simplicity) that runs the FastAPI as a task inside a container. One advantage of using Fargate is that it can be configured to use spot instances which are up to 70% cheaper than on-demand instances. As spot instances can be terminated at any time (although, in practice, this is only about 5% of the time), the app persists its state on Elastic File Storage (EFS). You can build the Docker image yourself by running `docker build .` in the root directory of the repository.
 
 To test the performance over the internet run
 ```
@@ -30,3 +30,16 @@ providing the application URL and the number of times to increment the counter i
 ```
 python test\lambda-latency.py <URL>/hits 1000
 ```
+
+## Results
+
+The cost estimates are based on current AWS pricing for the region `eu-west-2` and don't take into account network usage.
+
+| Architecture      | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
+|-------------------|:--------------------:|:----------------:|:--------------------------:|
+| FastAPI + EC2     | 13                   | 9.27             | N/A                        |
+| Lambda + S3       | 120                  | N/A              | 6.00                       |
+| Lambda + DynamoDB | 60                   | N/A              | 2.08                       |
+| Fargate Spot ECS  | 16                   | 3.11\*           | N/A                        |
+
+\* I haven't included the Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.

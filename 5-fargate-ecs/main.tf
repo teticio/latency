@@ -13,6 +13,7 @@ resource "aws_security_group" "http" {
   vpc_id = data.aws_vpc.this.id
 
   ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "TCP"
@@ -29,6 +30,7 @@ resource "aws_security_group" "https" {
   vpc_id = data.aws_vpc.this.id
 
   ingress {
+    description = "HTTPS"
     from_port   = 443
     to_port     = 443
     protocol    = "TCP"
@@ -61,6 +63,7 @@ resource "aws_security_group" "ingress_api" {
   vpc_id = data.aws_vpc.this.id
 
   ingress {
+    description = "API"
     from_port   = 8000
     to_port     = 8000
     protocol    = "TCP"
@@ -77,6 +80,7 @@ resource "aws_security_group" "efs" {
   vpc_id = data.aws_vpc.this.id
 
   ingress {
+    description = "NFS"
     from_port   = 2049
     to_port     = 2049
     protocol    = "tcp"

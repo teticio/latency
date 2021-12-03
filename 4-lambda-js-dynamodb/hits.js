@@ -12,7 +12,11 @@ exports.lambda_handler = async function (event) {
       'id': { N: '0' }
     }
   }).promise();
-  hits = parseInt(data.Item.hits.N) + 1;
+  try {
+    hits = parseInt(data.Item.hits.N) + 1;
+  } catch {
+    hits = 1;
+  }
   await ddb.updateItem({
     TableName: 'latency',
     Key: {

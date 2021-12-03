@@ -2,6 +2,7 @@ import os
 import hcl
 import json
 import boto3
+import botocore
 import argparse
 
 if __name__ == '__main__':
@@ -12,8 +13,8 @@ if __name__ == '__main__':
     parser.add_argument('url', type=str, help="URL to test")
     parser.add_argument('hits', type=int, help="Number of hits")
     args = parser.parse_args()
-    boto3.setup_default_session(region_name=region)
-    lambda_client = boto3.client('lambda')
+    config = botocore.config.Config(read_timeout=300, region_name=region)
+    lambda_client = boto3.client('lambda', config=config)
     ms = lambda_client.invoke(FunctionName='test-latency',
                               InvocationType='RequestResponse',
                               Payload=json.dumps({
