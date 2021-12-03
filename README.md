@@ -35,11 +35,12 @@ python test\lambda-latency.py <URL>/hits 1000
 
 The cost estimates are based on current AWS pricing for the region `eu-west-2` and don't take into account network usage.
 
-| Architecture      | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
-|-------------------|:--------------------:|:----------------:|:--------------------------:|
-| FastAPI + EC2     | 13                   | 9.27             | N/A                        |
-| Lambda + S3       | 120                  | N/A              | 6.00                       |
-| Lambda + DynamoDB | 60                   | N/A              | 2.08                       |
-| Fargate Spot ECS  | 16                   | 3.11\*           | N/A                        |
+| Architecture         | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
+|----------------------|:--------------------:|:----------------:|:--------------------------:|
+| FastAPI + EC2        | 13                   | 9.27             | N/A                        |
+| Lambda + S3          | 120                  | N/A              | 6.00                       |
+| Lambda + DynamoDB    | 60                   | N/A              | 2.08                       |
+| Lambda JS + DynamoDB | 105                  | N/A              | 2.23                       |
+| Fargate Spot ECS     | 16                   | 3.11\*           | N/A                        |
 
 \* I haven't included the Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.
