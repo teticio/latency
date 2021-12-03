@@ -87,13 +87,6 @@ resource "aws_security_group" "efs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = {
     Name = var.tag
   }
@@ -106,7 +99,7 @@ resource "aws_ecs_cluster" "this" {
   default_capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
   }
-  
+
   tags = {
     Name = var.tag
   }
@@ -121,10 +114,14 @@ resource "aws_efs_access_point" "this" {
 }
 
 resource "aws_efs_mount_target" "this" {
-  count           = length(data.aws_subnet_ids.this.ids)
-  file_system_id  = aws_efs_file_system.this.id
-  subnet_id       = sort(data.aws_subnet_ids.this.ids)[count.index]
-  security_groups = [aws_security_group.efs.id]
+  count          = length(data.aws_subnet_ids.this.ids)
+  file_system_id = aws_efs_file_system.this.id
+  subnet_id      = sort(data.aws_subnet_ids.this.ids)[count.index]
+
+  security_groups = [
+    aws_security_group.efs.id,
+    aws_security_group.egress_all.id
+  ]
 }
 
 resource "aws_cloudwatch_log_group" "this" {
@@ -259,8 +256,8 @@ resource "aws_lb_target_group" "this" {
   vpc_id      = data.aws_vpc.this.id
 
   health_check {
-    enabled             = true
-    path                = "/healthz"
+    enabled = true
+    path    = "/healthz"
   }
 
   depends_on = [aws_alb.this]

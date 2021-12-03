@@ -9,7 +9,7 @@ async def test_latency(url, hits=1000):
         start = timer()
         for _ in range(hits):
             async with session.get(url) as response:
-                text = await response.text()
+                 await response.text()
         end = timer()
     return (end - start) * 1000 / hits
 
