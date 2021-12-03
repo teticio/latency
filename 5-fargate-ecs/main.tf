@@ -1,5 +1,100 @@
 data "aws_region" "current" {}
 
+data "aws_vpc" "this" {
+  default = true
+}
+
+data "aws_subnet_ids" "this" {
+  vpc_id = data.aws_vpc.this.id
+}
+
+resource "aws_security_group" "http" {
+  name   = "http"
+  vpc_id = data.aws_vpc.this.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
+resource "aws_security_group" "https" {
+  name   = "https"
+  vpc_id = data.aws_vpc.this.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
+resource "aws_security_group" "egress_all" {
+  name   = "egress_all"
+  vpc_id = data.aws_vpc.this.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
+resource "aws_security_group" "ingress_api" {
+  name   = "ingress_api"
+  vpc_id = data.aws_vpc.this.id
+
+  ingress {
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
+resource "aws_security_group" "efs" {
+  name   = "efs"
+  vpc_id = data.aws_vpc.this.id
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
 resource "aws_ecs_cluster" "this" {
   name               = "latency"
   capacity_providers = ["FARGATE_SPOT", "FARGATE"]
@@ -13,13 +108,6 @@ resource "aws_ecs_cluster" "this" {
   }
 }
 
-resource "aws_ecr_repository" "latency" {
-  name = "latency"
-
-  tags = {
-    Name = var.tag
-  }
-}
 resource "aws_efs_access_point" "this" {
   file_system_id = aws_efs_file_system.this.id
 
@@ -29,9 +117,9 @@ resource "aws_efs_access_point" "this" {
 }
 
 resource "aws_efs_mount_target" "this" {
-  count           = length(aws_subnet.private.*.id)
+  count           = length(data.aws_subnet_ids.this.ids)
   file_system_id  = aws_efs_file_system.this.id
-  subnet_id       = element(aws_subnet.private.*.id, count.index)
+  subnet_id       = sort(data.aws_subnet_ids.this.ids)[count.index]
   security_groups = [aws_security_group.efs.id]
 }
 
@@ -57,8 +145,8 @@ resource "aws_ecs_service" "this" {
   }
 
   network_configuration {
-    assign_public_ip = false
-    subnets          = aws_subnet.private.*.id
+    assign_public_ip = true
+    subnets          = data.aws_subnet_ids.this.ids
 
     security_groups = [
       aws_security_group.egress_all.id,
@@ -85,7 +173,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = <<EOF
 [{
   "name": "latency",
-  "image": "${aws_ecr_repository.latency.repository_url}:latest",
+  "image": "teticio/latency:latest",
   "environment": [
     {
       "name": "COUNT_FILE",
@@ -164,7 +252,7 @@ resource "aws_lb_target_group" "this" {
   port        = 8000
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = aws_vpc.app_vpc.id
+  vpc_id      = data.aws_vpc.this.id
 
   health_check {
     enabled             = true
@@ -182,15 +270,13 @@ resource "aws_alb" "this" {
   name               = "latency"
   internal           = false
   load_balancer_type = "application"
-  subnets            = aws_subnet.public.*.id
+  subnets            = data.aws_subnet_ids.this.ids
 
   security_groups = [
     aws_security_group.http.id,
     aws_security_group.https.id,
     aws_security_group.egress_all.id,
   ]
-
-  depends_on = [aws_internet_gateway.igw]
 
   tags = {
     Name = var.tag
@@ -203,81 +289,11 @@ resource "aws_alb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-
-  tags = {
-    Name = var.tag
-  }
-}
-
-data "aws_route53_zone" "this" {
-  name         = var.hosted_zone
-  private_zone = false
-}
-
-resource "aws_acm_certificate" "this" {
-  domain_name       = var.domain
-  validation_method = "DNS"
-
-  tags = {
-    Name = var.tag
-  }
-}
-
-resource "aws_route53_record" "this" {
-  for_each = {
-    for dvo in aws_acm_certificate.this.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
-
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.this.zone_id
-}
-
-resource "aws_acm_certificate_validation" "this" {
-  certificate_arn         = aws_acm_certificate.this.arn
-  validation_record_fqdns = [for record in aws_route53_record.this : record.fqdn]
-}
-
-resource "aws_alb_listener" "https" {
-  load_balancer_arn = aws_alb.this.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  certificate_arn   = aws_acm_certificate_validation.this.certificate_arn
-
-  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.this.arn
   }
 
   tags = {
     Name = var.tag
-  }
-}
-
-resource "aws_route53_record" "www" {
-  zone_id         = data.aws_route53_zone.this.zone_id
-  name            = var.domain
-  type            = "A"
-  allow_overwrite = true
-
-  alias {
-    evaluate_target_health = true
-    name                   = aws_alb.this.dns_name
-    zone_id                = aws_alb.this.zone_id
   }
 }

@@ -1,4 +1,4 @@
 output "url" {
   description = "app endpoint"
-  value       = "http://${var.domain}"
+  value       = "http://${aws_alb.this.dns_name}"
 }
