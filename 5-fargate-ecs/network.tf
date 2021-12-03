@@ -1,7 +1,8 @@
 data "aws_availability_zones" "az" {}
 
 resource "aws_vpc" "app_vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
 
   tags = {
     Name = var.tag
@@ -10,8 +11,9 @@ resource "aws_vpc" "app_vpc" {
 
 resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.app_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = data.aws_availability_zones.az.names[0]
+  count             = length(data.aws_availability_zones.az.names)
+  cidr_block        = "10.0.${10 + count.index}.0/24"
+  availability_zone = data.aws_availability_zones.az.names[count.index]
 
   tags = {
     Name = var.tag
@@ -20,8 +22,9 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.app_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.az.names[1]
+  count             = length(data.aws_availability_zones.az.names)
+  cidr_block        = "10.0.${20 + count.index}.0/24"
+  availability_zone = data.aws_availability_zones.az.names[count.index]
 
   tags = {
     Name = var.tag
@@ -45,17 +48,20 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "public_subnet" {
-  subnet_id      = aws_subnet.public.id
+  count          = length(aws_subnet.private.*.id)
+  subnet_id      = element(aws_subnet.public.*.id, count.index)
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private_subnet" {
-  subnet_id      = aws_subnet.private.id
-  route_table_id = aws_route_table.private.id
+  count          = length(aws_subnet.private.*.id)
+  subnet_id      = element(aws_subnet.private.*.id, count.index)
+  route_table_id = element(aws_route_table.private.*.id, count.index)
 }
 
 resource "aws_eip" "nat" {
-  vpc = true
+  count = length(aws_subnet.private.*.id)
+  vpc   = true
 
   tags = {
     Name = var.tag
@@ -71,8 +77,9 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_nat_gateway" "ngw" {
-  subnet_id     = aws_subnet.public.id
-  allocation_id = aws_eip.nat.id
+  count         = length(aws_subnet.private.*.id)
+  allocation_id = element(aws_eip.nat.*.id, count.index)
+  subnet_id     = element(aws_subnet.public.*.id, count.index)
 
   depends_on = [aws_internet_gateway.igw]
 
@@ -88,15 +95,15 @@ resource "aws_route" "public_igw" {
 }
 
 resource "aws_route" "private_ngw" {
-  route_table_id         = aws_route_table.private.id
+  count                  = length(aws_route_table.private.*.id)
+  route_table_id         = element(aws_route_table.private.*.id, count.index)
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.ngw.id
+  nat_gateway_id         = element(aws_nat_gateway.ngw.*.id, count.index)
 }
 
 resource "aws_security_group" "http" {
-  name        = "http"
-  description = "HTTP traffic"
-  vpc_id      = aws_vpc.app_vpc.id
+  name   = "http"
+  vpc_id = aws_vpc.app_vpc.id
 
   ingress {
     from_port   = 80
@@ -111,9 +118,8 @@ resource "aws_security_group" "http" {
 }
 
 resource "aws_security_group" "https" {
-  name        = "https"
-  description = "HTTPS traffic"
-  vpc_id      = aws_vpc.app_vpc.id
+  name   = "https"
+  vpc_id = aws_vpc.app_vpc.id
 
   ingress {
     from_port   = 443
@@ -128,9 +134,8 @@ resource "aws_security_group" "https" {
 }
 
 resource "aws_security_group" "egress_all" {
-  name        = "egress-all"
-  description = "Allow all outbound traffic"
-  vpc_id      = aws_vpc.app_vpc.id
+  name   = "egress_all"
+  vpc_id = aws_vpc.app_vpc.id
 
   egress {
     from_port   = 0
@@ -145,14 +150,36 @@ resource "aws_security_group" "egress_all" {
 }
 
 resource "aws_security_group" "ingress_api" {
-  name        = "ingress-api"
-  description = "Allow ingress to API"
-  vpc_id      = aws_vpc.app_vpc.id
+  name   = "ingress_api"
+  vpc_id = aws_vpc.app_vpc.id
 
   ingress {
     from_port   = 8000
     to_port     = 8000
     protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag
+  }
+}
+
+resource "aws_security_group" "efs" {
+  name   = "efs"
+  vpc_id = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
