@@ -17,5 +17,6 @@ module "app" {
   #  source = "./2-lambda-s3"
   #  source = "./3-lambda-dynamodb"
   #  source = "./4-lambda-js-dynamodb"
-  source = "./5-fargate-ecs"
+  #  source = "./5-lambda-c++-dynamodb"
+  source = "./6-fargate-ecs"
 }
