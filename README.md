@@ -44,6 +44,6 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 | Lambda + DynamoDB    | 60                   | N/A              | 3.24                       |
 | Lambda JS + DynamoDB | 105                  | N/A              | 3.39                       |
 | Fargate Spot ECS     | 16                   | 3.11\*           | N/A                        |
-| Kubernetes           | 13                   | 59.81            | N/A                        |
+| Kubernetes           | 13                   | 59.81\*          | N/A                        |
 
 \* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.
