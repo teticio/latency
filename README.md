@@ -14,13 +14,13 @@ in `main.tf` to point to the corresponding directory.
 
 * **FastAPI + EC2** (`1-fastapi-ec2`). "Serverful" architecture. Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter. The server is exposed on port 8000.
 
-* **Lambda + S3** (`2-lambda-s3`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Lambda function which stores the counter as an object in a S3 bucket. Note that AWS resuses Lambda functions as much as possible, meaning that moving as much initialization code outside of the handler function itself improves the latency significantly.
+* **Lambda Python + S3** (`2-lambda-python-s3`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Python Lambda function which stores the counter as an object in a S3 bucket. Note that AWS resuses Lambda functions as much as possible, meaning that moving as much initialization code outside of the handler function itself improves the latency significantly.
 
-* **Lambda + DynamoDB** (`3-lambda-dynamodb`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a (Python) Lambda function which stores the counter as an item in a DynamoDB table.
+* **Lambda Python + DynamoDB** (`3-lambda-python-dynamodb`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Python Lambda function which stores the counter as an item in a DynamoDB table.
 
-* **Lambda JS + DynamoDB** (`4-lambda-js-dynamodb`). Same as above, but with a JavaScript Lambda function.
+* **Lambda JavaScript + DynamoDB** (`4-lambda-js-dynamodb`). Same as above, but with a JavaScript Lambda function.
 
-* **Lambda JS + DynamoDB** (`5-lambda-c++-dynamodb`). Same as above, but with a C++ Lambda function.
+* **Lambda C++ + DynamoDB** (`5-lambda-c++-dynamodb`). Same as above, but with a C++ Lambda function. To build the Lambda function yourself, adapt these instructions https://aws.amazon.com/blogs/compute/introducing-the-c-lambda-runtime/.
 
 * **Fargate ECS** (`6-fargate-ecs`). Serverless architecture. Creates a Fargate ECS service and Load Balancer on the default VPC (for simplicity) that runs the FastAPI server as a task inside a container. One advantage of using Fargate is that it can be configured to use spot instances which are up to 70% cheaper than on-demand instances. As spot instances can be terminated at any time (although, in practice, this is only about 5% of the time), the app persists its state on Elastic File Storage (EFS). You can build the Docker image yourself by running `docker build .` in the root directory of the repository.
 
@@ -39,13 +39,14 @@ python test\lambda-latency.py <URL>/hits 1000
 
 The cost estimates are based on current AWS pricing for the region `eu-west-2` and don't take into account network usage. I have included EC2, Lambda, S3, DynamoDB, EFS and API Gateway costs.
 
-| Architecture         | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
-|----------------------|:--------------------:|:----------------:|:--------------------------:|
-| FastAPI + EC2        | 13                   | 10.57            | N/A                        |
-| Lambda + S3          | 120                  | N/A              | 7.16                       |
-| Lambda + DynamoDB    | 60                   | N/A              | 3.24                       |
-| Lambda JS + DynamoDB | 105                  | N/A              | 3.39                       |
-| Fargate Spot ECS     | 16                   | 3.11\*           | N/A                        |
-| Kubernetes           | 13                   | 59.81\*          | N/A                        |
+| Architecture                 | Average latency (ms) | Monthly cost ($) | Cost per million calls ($) |
+|------------------------------|:--------------------:|:----------------:|:--------------------------:|
+| FastAPI + EC2                | 13                   | 10.57            | N/A                        |
+| Lambda Python + S3           | 120                  | N/A              | 7.16                       |
+| Lambda Python + DynamoDB     | 60                   | N/A              | 3.24                       |
+| Lambda JavaScript + DynamoDB | 105                  | N/A              | 3.39                       |
+| Lambda C++ + DynamoDB        |                      | N/A              |                            |
+| Fargate Spot ECS             | 16                   | 3.11\*           | N/A                        |
+| Kubernetes                   | 13                   | 59.81\*          | N/A                        |
 
 \* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.

@@ -45,7 +45,7 @@ module "lambda_function" {
   attach_policy_json     = true
   publish                = true
   create_package         = false
-  local_existing_package = "latency.zip"
+  local_existing_package = "${path.module}/build/latency.zip"
 
   policy_json = <<EOF
 {

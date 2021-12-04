@@ -7,4 +7,5 @@ Pipfile.lock
 package.json
 package-lock.json
 node_modules
-build
+*/build/*
+!*/build/latency.zip
