@@ -8,11 +8,12 @@ export AWS_SECRET_ACCESS_KEY=$(aws configure get default.aws_secret_access_key)
 kops create cluster \
   --zones=${AWS_REGION}a \
   --node-count=1 \
+  --master-size="t2.micro" \
   --node-size="t2.micro" \
   ${NAME}
 kops update cluster ${NAME} --yes --admin
 kops validate cluster ${NAME} --wait 20m
 
-kubectl -f 6-k8s/deployment.yaml
+kubectl apply -f 7-k8s/deployment.yaml
 echo http://`kubectl get svc latency-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"`
 read -p "Press any key to continue..." -n1 -s
