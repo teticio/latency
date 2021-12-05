@@ -63,9 +63,9 @@ int main()
       auto credentialsProvider = Aws::MakeShared<Aws::Auth::EnvironmentAWSCredentialsProvider>(TAG);
       Aws::DynamoDB::DynamoDBClient dynamoClient(credentialsProvider, config);
 
-      auto handler_fn = [&dynamoClient](invocation_request const &req)
+      auto handler_fn = [&dynamoClient](invocation_request const &request)
       {
-         return my_handler(req, dynamoClient);
+         return my_handler(request, dynamoClient);
       };
       run_handler(handler_fn);
    }
