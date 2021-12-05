@@ -1,6 +1,6 @@
 ## Latency
 
-The purpose of this repo is to compare the performance of various architectures for a simple web application with a backend that keeps track of the number of times it has been called.
+The purpose of this repo is to compare the performance of various architectures for a simple web application with a backend that keeps track of the number of times it has been called. It should be fairly straightforward to adapt to your specific needs.
 
 Each architecture can be built by running
 ```
@@ -24,7 +24,7 @@ in `main.tf` to point to the corresponding directory.
 
 * **Fargate ECS** (`6-fargate-ecs`). Serverless architecture. Creates a Fargate ECS service and Load Balancer on the default VPC (for simplicity) that runs the FastAPI server as a task inside a container. One advantage of using Fargate is that it can be configured to use spot instances which are up to 70% cheaper than on-demand instances. As spot instances can be terminated at any time (although, in practice, this is only about 5% of the time), the app persists its state on Elastic File Storage (EFS). You can build the Docker image yourself by running `docker build .` in the root directory of the repository.
 
-* **Kubernetes** (`7-k8s`). The main alternatives for creating a Kubernetes cluster on AWS are kOps and AWS EKS. An advantage of using Kubernetes is that you can build a complex application from individually scalable and re-deployable microservices that is cloud vendor agnostic. With kOps it is a lot easier to create a cluster than with EKS using Terraform. It is also cheaper (the control node costs $46.52 a month, whereas the EKS cluster comes in at $73 not including the worker nodes). It allows finer grained control, but it is arguably harder to configure, if you are used to using the AWS console. To build the cluster and install the application, run `./6-8ks/apply.sh <Your Route53 managed domain>` in a bash shell - be patient, the whole process can take up to 20 minutes. (To tear it down again, run `./6-8ks/destroy.sh <Your Route53 managed domain>`). You will need to have installed [kOps](https://kops.sigs.k8s.io/getting_started/install/), [kubectl](https://kubernetes.io/docs/tasks/tools/) and bash.
+* **Kubernetes** (`7-k8s`). The main alternatives for creating a Kubernetes cluster on AWS are kOps and AWS EKS. An advantage of using Kubernetes is that you can build a complex application from individually scalable and re-deployable microservices that is cloud vendor agnostic. With kOps it is a lot easier to create a cluster than with EKS using Terraform. It is also cheaper (the control node costs a minimum of $12.06 a month, whereas the EKS cluster comes in at $73 not including the worker nodes). It allows finer grained control, but it is arguably harder to configure, if you are used to using the AWS console. To build the cluster and install the application, run `./6-8ks/apply.sh <Your Route53 managed domain>` in a bash shell - be patient, the whole process can take up to 20 minutes. (To tear it down again, run `./6-8ks/destroy.sh <Your Route53 managed domain>`). You will need to have installed [kOps](https://kops.sigs.k8s.io/getting_started/install/), [kubectl](https://kubernetes.io/docs/tasks/tools/) and bash.
 
 To test the performance over the internet run
 ```
@@ -47,6 +47,6 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 | Lambda JavaScript + DynamoDB | 105                  | N/A              | 3.39                       |
 | Lambda C++ + DynamoDB        | 23                   | N/A              | 3.09                       |
 | Fargate Spot ECS             | 16                   | 3.11\*           | N/A                        |
-| Kubernetes                   | 13                   | 59.81\*          | N/A                        |
+| Kubernetes                   | 13                   | 22.63\*          | N/A                        |
 
-\* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. It will set you back at least $19.32 a month.
+\* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. kOps also creates one by default. It will set you back at least $19.32 a month.
