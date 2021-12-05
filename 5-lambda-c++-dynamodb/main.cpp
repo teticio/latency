@@ -19,8 +19,6 @@ static char const TAG[] = "lambda";
 invocation_response my_handler(invocation_request const &request,
                                Aws::DynamoDB::DynamoDBClient const &dynamoClient)
 {
-   std::string hits;
-
    Aws::DynamoDB::Model::GetItemRequest getRequest;
    getRequest.SetTableName("latency");
    Aws::DynamoDB::Model::AttributeValue key;
@@ -30,6 +28,7 @@ invocation_response my_handler(invocation_request const &request,
    const Aws::DynamoDB::Model::GetItemOutcome &getResult = dynamoClient.GetItem(getRequest);
    const Aws::Map<Aws::String, Aws::DynamoDB::Model::AttributeValue> &item = getResult.GetResult().GetItem();
 
+   std::string hits;
    if (item.size() > 0)
       hits = std::to_string(std::stoi(item.begin()->second.GetN()) + 1);
    else
