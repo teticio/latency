@@ -38,8 +38,7 @@ invocation_response my_handler(invocation_request const &request,
    Aws::DynamoDB::Model::UpdateItemRequest updateRequest;
    updateRequest.SetTableName("latency");
    updateRequest.AddKey("id", key);
-   Aws::String update_expression("SET hits = :hits");
-   updateRequest.SetUpdateExpression(update_expression);
+   updateRequest.SetUpdateExpression("SET hits = :hits");
    Aws::DynamoDB::Model::AttributeValue attributeUpdatedValue;
    attributeUpdatedValue.SetN(hits);
    Aws::Map<Aws::String, Aws::DynamoDB::Model::AttributeValue> expressionAttributeValues;
