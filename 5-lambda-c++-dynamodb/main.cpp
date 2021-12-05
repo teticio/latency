@@ -1,4 +1,6 @@
-// main.cpp
+#include <string>
+#include <iostream>
+
 #include <aws/core/Aws.h>
 #include <aws/core/utils/Outcome.h>
 #include <aws/core/platform/Environment.h>
@@ -9,8 +11,6 @@
 #include <aws/dynamodb/model/GetItemRequest.h>
 #include <aws/dynamodb/model/UpdateItemRequest.h>
 #include <aws/lambda-runtime/runtime.h>
-#include <iostream>
-#include <string> 
 
 using namespace aws::lambda_runtime;
 
@@ -47,7 +47,9 @@ invocation_response my_handler(invocation_request const &request,
    updateRequest.SetExpressionAttributeValues(expressionAttributeValues);
    const Aws::DynamoDB::Model::UpdateItemOutcome& updateResult = dynamoClient.UpdateItem(updateRequest);
 
-   return invocation_response::success(hits, "text/plain");
+   return invocation_response::success(
+      "{\"statusCode\": 200, \"headers\": {\"Content-Type\": \"text/plain\"}, \"body\": \"" + hits + "\"}",
+      "application/json");
 }
 
 int main()
@@ -59,9 +61,9 @@ int main()
       config.region = Aws::Environment::GetEnv("AWS_REGION");
       config.caFile = "/etc/pki/tls/certs/ca-bundle.crt";
       config.disableExpectHeader = true;
-
       auto credentialsProvider = Aws::MakeShared<Aws::Auth::EnvironmentAWSCredentialsProvider>(TAG);
       Aws::DynamoDB::DynamoDBClient dynamoClient(credentialsProvider, config);
+
       auto handler_fn = [&dynamoClient](invocation_request const &req)
       {
          return my_handler(req, dynamoClient);

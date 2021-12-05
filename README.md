@@ -20,7 +20,7 @@ in `main.tf` to point to the corresponding directory.
 
 * **Lambda JavaScript + DynamoDB** (`4-lambda-js-dynamodb`). Same as above, but with a JavaScript Lambda function.
 
-* **Lambda C++ + DynamoDB** (`5-lambda-c++-dynamodb`). Same as above, but with a C++ Lambda function. To build the Lambda function yourself, adapt these instructions https://aws.amazon.com/blogs/compute/introducing-the-c-lambda-runtime/.
+* **Lambda C++ + DynamoDB** (`5-lambda-c++-dynamodb`). Same as above, but with a C++ Lambda function. To build the Lambda function yourself, adapt these instructions https://github.com/awslabs/aws-lambda-cpp.
 
 * **Fargate ECS** (`6-fargate-ecs`). Serverless architecture. Creates a Fargate ECS service and Load Balancer on the default VPC (for simplicity) that runs the FastAPI server as a task inside a container. One advantage of using Fargate is that it can be configured to use spot instances which are up to 70% cheaper than on-demand instances. As spot instances can be terminated at any time (although, in practice, this is only about 5% of the time), the app persists its state on Elastic File Storage (EFS). You can build the Docker image yourself by running `docker build .` in the root directory of the repository.
 
@@ -45,7 +45,7 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 | Lambda Python + S3           | 120                  | N/A              | 7.16                       |
 | Lambda Python + DynamoDB     | 60                   | N/A              | 3.24                       |
 | Lambda JavaScript + DynamoDB | 105                  | N/A              | 3.39                       |
-| Lambda C++ + DynamoDB        |                      | N/A              |                            |
+| Lambda C++ + DynamoDB        | 23                   | N/A              | 3.09                       |
 | Fargate Spot ECS             | 16                   | 3.11\*           | N/A                        |
 | Kubernetes                   | 13                   | 59.81\*          | N/A                        |
 

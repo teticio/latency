@@ -40,7 +40,7 @@ resource "aws_dynamodb_table" "dynamodb" {
 module "lambda_function" {
   source                 = "terraform-aws-modules/lambda/aws"
   function_name          = "hits"
-  handler                = "hello"
+  handler                = "foobar"
   runtime                = "provided"
   attach_policy_json     = true
   publish                = true
