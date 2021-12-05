@@ -28,7 +28,7 @@ invocation_response my_handler(invocation_request const &request,
    getRequest.AddKey("id", key);
    getRequest.SetProjectionExpression("hits");
    const Aws::DynamoDB::Model::GetItemOutcome &getResult = dynamoClient.GetItem(getRequest);
-   const Aws::Map<Aws::String, Aws::DynamoDB::Model::AttributeValue>& item = getResult.GetResult().GetItem();
+   const Aws::Map<Aws::String, Aws::DynamoDB::Model::AttributeValue> &item = getResult.GetResult().GetItem();
 
    if (item.size() > 0)
       hits = std::to_string(std::stoi(item.begin()->second.GetN()) + 1);
@@ -44,11 +44,11 @@ invocation_response my_handler(invocation_request const &request,
    Aws::Map<Aws::String, Aws::DynamoDB::Model::AttributeValue> expressionAttributeValues;
    expressionAttributeValues[":hits"] = attributeUpdatedValue;
    updateRequest.SetExpressionAttributeValues(expressionAttributeValues);
-   const Aws::DynamoDB::Model::UpdateItemOutcome& updateResult = dynamoClient.UpdateItem(updateRequest);
+   const Aws::DynamoDB::Model::UpdateItemOutcome &updateResult = dynamoClient.UpdateItem(updateRequest);
 
    return invocation_response::success(
-      "{\"statusCode\": 200, \"headers\": {\"Content-Type\": \"text/plain\"}, \"body\": \"" + hits + "\"}",
-      "application/json");
+       "{\"statusCode\": 200, \"headers\": {\"Content-Type\": \"text/plain\"}, \"body\": \"" + hits + "\"}",
+       "application/json");
 }
 
 int main()
