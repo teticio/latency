@@ -32,10 +32,10 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
     let default_value = AttributeValue::N("0".to_string());
     let mut default_item = HashMap::new();
     default_item.insert(item_name.to_string(), default_value.clone());
-    let item = match item.unwrap_or(&default_item).get(item_name) {
-        Some(value) => value,
-        None => &default_value
-    };
+    let item = item
+        .unwrap_or(&default_item)
+        .get(item_name)
+        .unwrap_or(&default_value);
     let hits = match item {
         AttributeValue::N(value) => value,
         _ => "0",
