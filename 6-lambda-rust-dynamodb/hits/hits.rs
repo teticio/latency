@@ -41,13 +41,13 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
         _ => "0",
     };
 
-    let new_hits = hits.parse::<i32>().unwrap() + 1;
+    let hits = hits.parse::<i32>().unwrap() + 1;
     client
         .update_item()
         .table_name(table_name.to_string())
         .key(key_name.to_string(), AttributeValue::N("0".to_string()))
         .update_expression("SET hits = :hits".to_string())
-        .expression_attribute_values(":hits".to_string(), AttributeValue::N(new_hits.to_string()))
+        .expression_attribute_values(":hits".to_string(), AttributeValue::N(hits.to_string()))
         .send()
         .await
         .expect("Failed to update item");
@@ -57,6 +57,6 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
         "headers": {
             "Content-Type": "text/plain",
         },
-        "body": new_hits.to_string()
+        "body": hits.to_string()
     }))
 }
