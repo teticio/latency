@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 11)
-project(latency LANGUAGES CXX)
+project(lambda LANGUAGES CXX)
 
 find_package(aws-lambda-runtime REQUIRED)
 find_package(aws-cpp-sdk-core REQUIRED)
 find_package(aws-cpp-sdk-dynamodb REQUIRED)
-add_executable(${PROJECT_NAME} "main.cpp")
+add_executable(${PROJECT_NAME} "hits.cpp")
 target_link_libraries(${PROJECT_NAME} PUBLIC AWS::aws-lambda-runtime aws-cpp-sdk-core aws-cpp-sdk-dynamodb)
 aws_lambda_package_target(${PROJECT_NAME})
