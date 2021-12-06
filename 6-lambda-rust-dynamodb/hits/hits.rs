@@ -20,7 +20,7 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
     let item_name = "hits";
     let key_name = "id";
 
-    let response = &client
+    let response = client
         .get_item()
         .table_name(table_name.to_string())
         .key(key_name.to_string(), AttributeValue::N("0".to_string()))
