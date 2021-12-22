@@ -16,14 +16,14 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error> {
-    let table_name = "latency";
-    let item_name = "hits";
-    let key_name = "id";
+    let table_name = String::from("latency");
+    let item_name = String::from("hits");
+    let key_name = String::from("id");
 
     let response = client
         .get_item()
-        .table_name(table_name.to_string())
-        .key(key_name.to_string(), AttributeValue::N("0".to_string()))
+        .table_name(&table_name)
+        .key(&key_name, AttributeValue::N("0".to_string()))
         .send()
         .await
         .expect("Failed to get item");
@@ -31,23 +31,23 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
 
     let default_value = AttributeValue::N("0".to_string());
     let mut default_item = HashMap::new();
-    default_item.insert(item_name.to_string(), default_value.clone());
+    default_item.insert(item_name.clone(), default_value.clone());
     let item = item
         .unwrap_or(&default_item)
-        .get(item_name)
+        .get(&item_name)
         .unwrap_or(&default_value);
     let hits = match item {
         AttributeValue::N(value) => value,
         _ => "0",
     };
 
-    let hits = hits.parse::<i32>().unwrap() + 1;
+    let hits = (hits.parse::<i32>().unwrap() + 1).to_string();
     client
         .update_item()
-        .table_name(table_name.to_string())
-        .key(key_name.to_string(), AttributeValue::N("0".to_string()))
+        .table_name(&table_name)
+        .key(&key_name, AttributeValue::N("0".to_string()))
         .update_expression("SET hits = :hits".to_string())
-        .expression_attribute_values(":hits".to_string(), AttributeValue::N(hits.to_string()))
+        .expression_attribute_values(":hits".to_string(), AttributeValue::N(hits.clone()))
         .send()
         .await
         .expect("Failed to update item");
@@ -57,6 +57,6 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
         "headers": {
             "Content-Type": "text/plain",
         },
-        "body": hits.to_string()
+        "body": &hits
     }))
 }
