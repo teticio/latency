@@ -26,23 +26,21 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
         .key(key_name, id.clone())
         .send()
         .await?;
-    let item = response.item();
 
-    let hits = if let Some(item) = item {
+    let hits = if let Some(item) = response.item() {
         if let Some(item) = item.get(item_name) {
             if let AttributeValue::N(value) = item {
-                value
+                (value.parse::<i32>()? + 1).to_string()
             } else {
-                "0"
+                String::from("1")
             }
         } else {
-            "0"
+            String::from("1")
         }
     } else {
-        "0"
+        String::from("1")
     };
 
-    let hits = (hits.parse::<i32>()? + 1).to_string();
     client
         .update_item()
         .table_name(table_name)
