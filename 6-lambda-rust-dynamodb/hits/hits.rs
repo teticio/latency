@@ -3,7 +3,6 @@ use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
 use lambda_runtime::{handler_fn, Context, Error};
 use serde_json::{json, Value};
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -23,34 +22,34 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
     let response = client
         .get_item()
         .table_name(table_name)
-        .key(key_name, AttributeValue::N("0".to_string()))
+        .key(key_name, AttributeValue::N(String::from("0")))
         .send()
-        .await
-        .expect("Failed to get item");
+        .await?;
     let item = response.item();
 
-    let default_value = AttributeValue::N("0".to_string());
-    let mut default_item = HashMap::new();
-    default_item.insert(item_name.to_string(), default_value.clone());
-    let item = item
-        .unwrap_or(&default_item)
-        .get(item_name)
-        .unwrap_or(&default_value);
-    let hits = match item {
-        AttributeValue::N(value) => value,
-        _ => "0",
+    let hits = if let Some(item) = item {
+        if let Some(item) = item.get(item_name) {
+            if let AttributeValue::N(value) = item {
+                value
+            } else {
+                "0"
+            }
+        } else {
+            "0"
+        }
+    } else {
+        "0"
     };
 
-    let hits = (hits.parse::<i32>().unwrap() + 1).to_string();
+    let hits = (hits.parse::<i32>()? + 1).to_string();
     client
         .update_item()
         .table_name(table_name)
-        .key(key_name, AttributeValue::N("0".to_string()))
-        .update_expression("SET hits = :hits".to_string())
-        .expression_attribute_values(":hits".to_string(), AttributeValue::N(hits.clone()))
+        .key(key_name, AttributeValue::N(String::from("0")))
+        .update_expression(String::from("SET hits = :hits"))
+        .expression_attribute_values(String::from(":hits"), AttributeValue::N(hits.clone()))
         .send()
-        .await
-        .expect("Failed to update item");
+        .await?;
 
     Ok(json!({
         "statusCode": 200,
