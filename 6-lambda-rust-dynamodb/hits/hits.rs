@@ -18,11 +18,12 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
     let table_name = "latency";
     let item_name = "hits";
     let key_name = "id";
+    let id = AttributeValue::N(String::from("0"));
 
     let response = client
         .get_item()
         .table_name(table_name)
-        .key(key_name, AttributeValue::N(String::from("0")))
+        .key(key_name, id.clone())
         .send()
         .await?;
     let item = response.item();
@@ -45,7 +46,7 @@ async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error
     client
         .update_item()
         .table_name(table_name)
-        .key(key_name, AttributeValue::N(String::from("0")))
+        .key(key_name, id)
         .update_expression(String::from("SET hits = :hits"))
         .expression_attribute_values(String::from(":hits"), AttributeValue::N(hits.clone()))
         .send()
