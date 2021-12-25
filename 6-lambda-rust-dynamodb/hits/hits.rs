@@ -3,7 +3,6 @@ use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
 use lambda_runtime::{handler_fn, Context, Error};
 use serde_json::{json, Value};
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -16,41 +15,40 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(_event: Value, _: Context, client: &Client) -> Result<Value, Error> {
-    let table_name = String::from("latency");
-    let item_name = String::from("hits");
-    let key_name = String::from("id");
+    let table_name = "latency";
+    let item_name = "hits";
+    let key_name = "id";
+    let id = AttributeValue::N(String::from("0"));
 
     let response = client
         .get_item()
-        .table_name(&table_name)
-        .key(&key_name, AttributeValue::N("0".to_string()))
+        .table_name(table_name)
+        .key(key_name, id.clone())
         .send()
-        .await
-        .expect("Failed to get item");
-    let item = response.item();
+        .await?;
 
-    let default_value = AttributeValue::N("0".to_string());
-    let mut default_item = HashMap::new();
-    default_item.insert(item_name.clone(), default_value.clone());
-    let item = item
-        .unwrap_or(&default_item)
-        .get(&item_name)
-        .unwrap_or(&default_value);
-    let hits = match item {
-        AttributeValue::N(value) => value,
-        _ => "0",
+    let hits = if let Some(item) = response.item() {
+        if let Some(item) = item.get(item_name) {
+            if let AttributeValue::N(value) = item {
+                (value.parse::<i32>()? + 1).to_string()
+            } else {
+                String::from("1")
+            }
+        } else {
+            String::from("1")
+        }
+    } else {
+        String::from("1")
     };
 
-    let hits = (hits.parse::<i32>().unwrap() + 1).to_string();
     client
         .update_item()
-        .table_name(&table_name)
-        .key(&key_name, AttributeValue::N("0".to_string()))
-        .update_expression("SET hits = :hits".to_string())
-        .expression_attribute_values(":hits".to_string(), AttributeValue::N(hits.clone()))
+        .table_name(table_name)
+        .key(key_name, id)
+        .update_expression(String::from("SET hits = :hits"))
+        .expression_attribute_values(String::from(":hits"), AttributeValue::N(hits.clone()))
         .send()
-        .await
-        .expect("Failed to update item");
+        .await?;
 
     Ok(json!({
         "statusCode": 200,
