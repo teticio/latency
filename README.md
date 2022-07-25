@@ -12,7 +12,7 @@ in the root directory. The application URL will be output once the process is co
 ```
 in `main.tf` to point to the corresponding directory.
 
-* **FastAPI + EC2** (`1-fastapi-ec2`). "Serverful" architecture. Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return a in-memory counter. The server is exposed on port 8000.
+* **FastAPI + EC2** (`1-fastapi-ec2`). "Serverful" architecture. Spins up an EC2 instance and installs a Python FastAPI server which serves the web page, provides an end-point to increment & return an in-memory counter. The server is exposed on port 8000.
 
 * **Lambda Python + S3** (`2-lambda-python-s3`). Serverless architecture. API Gateway serves the web page from S3 bucket and provides route to a Python Lambda function which stores the counter as an object in a S3 bucket. Note that AWS reuses Lambda functions as much as possible, meaning that moving as much initialization code outside of the handler function itself improves the latency significantly.
 
