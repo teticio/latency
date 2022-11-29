@@ -62,18 +62,18 @@ resource "aws_instance" "ec2" {
 
   provisioner "file" {
     source      = "${path.module}/src"
-    destination = "~/src"
+    destination = "/tmp/src"
   }
 
   provisioner "file" {
     source      = "${path.root}/common"
-    destination = "~/common"
+    destination = "/tmp/common"
   }
 
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "cd src",
+      "cd /tmp/src",
       "chmod +x bootstrap.sh",
       "./bootstrap.sh"
     ]
