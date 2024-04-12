@@ -22,7 +22,7 @@ url = terraform_output("terraform.tfstate", "url")
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test latency of SQS queue")
     parser.add_argument("calculations", type=int, help="Number of calculations")
-    parser.add_argument("max", type=int, help="Max value of x")
+    parser.add_argument("max", type=float, help="Max value of x")
     args = parser.parse_args()
 
     table.update_item(
@@ -38,6 +38,7 @@ if __name__ == "__main__":
             json={"x": random.uniform(0, args.max)},
             timeout=30,
         )
+        assert response.status_code == 200
 
     while True:
         done = table.get_item(Key={"id": 0})["Item"]["done"]
