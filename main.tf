@@ -19,5 +19,6 @@ module "app" {
   #  source = "./5-lambda-c++-dynamodb"
   #  source = "./6-lambda-rust-dynamodb"
   #  source = "./7-fargate-ecs"
-  source = "./9-lambda-sqs"
+  #  source = "./9-lambda-sqs"
+  source = "./10-eks-rabbitmq"
 }
