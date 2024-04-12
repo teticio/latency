@@ -65,6 +65,10 @@ resource "aws_dynamodb_table" "dynamodb" {
 
 resource "aws_sqs_queue" "dead_letter_queue" {
   name = "latency-dead-letter-queue"
+
+  tags = {
+    Name = var.tag
+  }
 }
 
 resource "aws_sqs_queue" "queue" {
@@ -106,6 +110,10 @@ resource "aws_iam_role" "api" {
       }
     ]
   })
+
+  tags = {
+    Name = var.tag
+  }
 }
 
 resource "aws_iam_policy" "api" {
@@ -123,6 +131,10 @@ resource "aws_iam_policy" "api" {
       },
     ],
   })
+
+  tags = {
+    Name = var.tag
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "api" {
@@ -132,6 +144,10 @@ resource "aws_iam_role_policy_attachment" "api" {
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "latency"
+
+  tags = {
+    Name = var.tag
+  }
 }
 
 resource "aws_api_gateway_method" "api" {
@@ -223,41 +239,3 @@ resource "aws_api_gateway_deployment" "api" {
     aws_api_gateway_integration.api,
   ]
 }
-
-# # For logging
-# resource "aws_api_gateway_method_settings" "api" {
-#   rest_api_id = aws_api_gateway_rest_api.api.id
-#   stage_name  = aws_api_gateway_deployment.api.stage_name
-#   method_path = "*/*"
-
-#   settings {
-#     logging_level   = "INFO"
-#   }
-# }
-
-# resource "aws_api_gateway_account" "main" {
-#   cloudwatch_role_arn = aws_iam_role.main.arn
-# }
-
-# resource "aws_iam_role" "main" {
-#   name = "api-gateway-logs-role"
-
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Sid = "",
-#         Effect = "Allow",
-#         Principal = {
-#           Service = "apigateway.amazonaws.com"
-#         },
-#         Action = "sts:AssumeRole"
-#       }
-#     ]
-#   })
-# }
-
-# resource "aws_iam_role_policy_attachment" "main" {
-#   role       = aws_iam_role.main.name
-#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-# }
