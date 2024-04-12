@@ -53,3 +53,9 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 | Kubernetes                   | 13                   | 22.63\*          | N/A                        |
 
 \* I haven't included the Elastic Load Balancer here as this is something you would probably want anyway. Even for a minimalist example, it is not possible to set up and access a Fargate cluster without one. kOps also creates one by default. It will set you back at least $19.32 a month.
+
+## Queues
+
+Now let's suppose we have a function `calc` that takes a parameter `x` and takes `x` seconds to return `x`. We might want to use a queue to run many calculations in parallel.
+
+* **Lambda Python + SQS** (`9-lambda-python-sqs`). Serverless architecture. API Gateway posts a message to an SQS queue which triggers a Python Lambda function that runs the calculation and then increments a counter in a DynamoDB table. To test it, `python test\sqs.py 1000 2` will run 1000 "calculations" that take a random time to complete between 0 and 2 seconds.
