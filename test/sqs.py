@@ -18,7 +18,6 @@ def terraform_output(state_file_path, output_name):
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table("latency")
 url = terraform_output("terraform.tfstate", "url")
-NUM_REQUESTS = 1000
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test latency of SQS queue")
@@ -42,7 +41,7 @@ if __name__ == "__main__":
 
     while True:
         done = table.get_item(Key={"id": 0})["Item"]["done"]
-        if done == NUM_REQUESTS:
+        if done == args.calculations:
             break
         sleep(1)
         print(".", end="", flush=True)
