@@ -1,4 +1,4 @@
-// with help from https://gist.github.com/afloesch/dc7d8865eeb91100648330a46967be25
+# with help from https://gist.github.com/afloesch/dc7d8865eeb91100648330a46967be25
 
 data "aws_region" "current" {}
 
@@ -117,7 +117,7 @@ resource "aws_iam_role" "api" {
 }
 
 resource "aws_iam_policy" "api" {
-  name = "latency"
+  name = "latency-api-policy"
 
   policy = jsonencode({
     Version = "2012-10-17",

@@ -9,6 +9,23 @@ data "aws_subnets" "default" {
   }
 }
 
+resource "aws_ec2_tag" "elb_tag" {
+  count       = length(data.aws_subnets.default.ids)
+  resource_id = data.aws_subnets.default.ids[count.index]
+  key         = "kubernetes.io/role/elb"
+  value       = "1"
+}
+
+data "local_file" "policy" {
+  # from https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json
+  filename = "${path.module}/policy.aws-loadbalancer-controller.json"
+}
+
+resource "aws_iam_policy" "loadbalancer_controller_policy" {
+  name   = "latency-loadbalancer-controller-policy"
+  policy = data.local_file.policy.content
+}
+
 module "eks" {
   source                                   = "terraform-aws-modules/eks/aws"
   cluster_name                             = "latency"
@@ -26,6 +43,17 @@ module "eks" {
       desired_size   = 1
       instance_types = ["t3.large"]
       capacity_type  = "SPOT"
+
+      iam_role_additional_policies = {
+        ebs_csi_driver_policy           = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        load_balancer_controller_policy = aws_iam_policy.loadbalancer_controller_policy.arn
+      }
+    }
+  }
+
+  cluster_addons = {
+    aws-ebs-csi-driver = {
+      most_recent = true
     }
   }
 
