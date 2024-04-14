@@ -64,14 +64,14 @@ async def main(args):
     rpc_client = RpcClient()
     await rpc_client.connect()
 
-    async def make_call(x, progress):
+    async def calc(x, progress):
         response = await rpc_client.call(x)
         assert math.fabs(response - x) < 1e-6
         progress.update(1)
 
     start = time()
     with tqdm(total=args.calculations) as progress:
-        tasks = [make_call(random.uniform(0, args.max), progress) for _ in range(args.calculations)]
+        tasks = [calc(random.uniform(0, args.max), progress) for _ in range(args.calculations)]
         await asyncio.gather(*tasks)
 
     print(f"{time() - start:.2f} seconds")
