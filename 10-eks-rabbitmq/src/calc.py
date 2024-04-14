@@ -1,14 +1,7 @@
-import json
+import os
 from time import sleep
 
 import pika
-
-
-def terraform_output(state_file_path, output_name):
-    with open(state_file_path, "rt", encoding="utf-8") as file:
-        state_data = json.load(file)
-    output = state_data.get("outputs", {}).get(output_name, {}).get("value")
-    return output
 
 
 def on_request(ch, method, properties, body):
@@ -26,10 +19,8 @@ def on_request(ch, method, properties, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-url = terraform_output("terraform.tfstate", "url")
-connection = pika.BlockingConnection(
-    pika.URLParameters(url=url)
-)
+url = f"amqp://{os.getenv('RABBITMQ_USERNAME')}:{os.getenv('RABBITMQ_PASSWORD')}@rabbitmq:5672"
+connection = pika.BlockingConnection(pika.URLParameters(url=url))
 channel = connection.channel()
 
 channel.queue_declare(queue="rpc_queue")
