@@ -79,7 +79,7 @@ async def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test latency of RabbitM queue")
+    parser = argparse.ArgumentParser(description="Test latency of RabbitMQ queue")
     parser.add_argument("calculations", type=int, help="Number of calculations")
     parser.add_argument("max", type=float, help="Max value of x")
     args = parser.parse_args()
