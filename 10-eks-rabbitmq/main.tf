@@ -16,6 +16,13 @@ resource "aws_ec2_tag" "elb_tag" {
   value       = "1"
 }
 
+resource "aws_ec2_tag" "internal_elb_tag" {
+  count       = length(data.aws_subnets.default.ids)
+  resource_id = data.aws_subnets.default.ids[count.index]
+  key         = "kubernetes.io/role/internal-elb"
+  value       = "1"
+}
+
 data "local_file" "policy" {
   # from https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json
   filename = "${path.module}/policy.aws-loadbalancer-controller.json"

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: sqs",
+            "name": "Python: rabbitmq",
             "type": "python",
             "request": "launch",
-            "program": "test/sqs.py",
+            "program": "test/rabbitmq.py",
             "args": [
                 "1000",
                 "2",

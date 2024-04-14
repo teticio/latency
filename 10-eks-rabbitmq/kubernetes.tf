@@ -1,6 +1,6 @@
 # aws eks update-kubeconfig --name latency
 # echo $(kubectl get secret --namespace default rabbitmq -o jsonpath="{.data.rabbitmq-password}" | base64 --decode)
-# kubectl get ingress rabbitmq-management-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+# kubectl get ingress rabbitmq-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
@@ -12,63 +12,22 @@ provider "kubernetes" {
     command     = "aws"
   }
 }
-
-resource "kubernetes_ingress_v1" "rabbitmq_management" {
+data "kubernetes_service" "rabbitmq" {
   metadata {
-    name = "rabbitmq-management-ingress"
-    annotations = {
-      "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type" = "ip"
-    }
+    name = "rabbitmq"
   }
 
-  spec {
-    ingress_class_name = "alb"
-    rule {
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "rabbitmq"
-              port {
-                number = 15672
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  depends_on = [
+    helm_release.rabbitmq
+  ]
 }
 
-resource "kubernetes_ingress_v1" "rabbitmq" {
+data "kubernetes_secret" "rabbitmq" {
   metadata {
-    name = "rabbitmq-ingress"
-    annotations = {
-      "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type" = "ip"
-    }
+    name = "rabbitmq"
   }
 
-  spec {
-    ingress_class_name = "alb"
-    rule {
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "rabbitmq"
-              port {
-                number = 5672
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  depends_on = [
+    helm_release.rabbitmq
+  ]
 }

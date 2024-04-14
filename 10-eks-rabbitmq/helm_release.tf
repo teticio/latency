@@ -55,4 +55,9 @@ resource "helm_release" "rabbitmq" {
     name  = "rabbitmq.erlangCookie"
     value = random_string.rabbitmq_erlang_cookie.result
   }
+
+  set {
+    name  = "service.type"
+    value = "LoadBalancer"
+  }
 }

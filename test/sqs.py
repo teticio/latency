@@ -32,7 +32,7 @@ if __name__ == "__main__":
     )
 
     start = time()
-    for i in tqdm(range(args.calculations)):
+    for _ in tqdm(range(args.calculations)):
         response = requests.post(
             url,
             json={"x": random.uniform(0, args.max)},
