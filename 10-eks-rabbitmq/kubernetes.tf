@@ -9,6 +9,17 @@ provider "kubernetes" {
   }
 }
 
+data "aws_eks_cluster_auth" "main" {
+  name = module.eks.cluster_name
+}
+
+# provider "kubectl" {
+#   host                   = module.eks.cluster_endpoint
+#   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+#   token                  = data.aws_eks_cluster_auth.main.token
+#   load_config_file       = false
+# }
+
 data "kubernetes_service" "rabbitmq" {
   metadata {
     name = "rabbitmq"
@@ -38,8 +49,6 @@ resource "kubernetes_deployment" "calc" {
   }
 
   spec {
-    replicas = 1
-
     selector {
       match_labels = {
         app = "calc"
@@ -58,9 +67,21 @@ resource "kubernetes_deployment" "calc" {
           image = module.ecr.image_uri
           name  = "latency-calc"
 
+          resources {
+            limits = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+
+            requests = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+          }
+
           env {
             name  = "RABBITMQ_USERNAME"
-            value = [for s in helm_release.rabbitmq.set : s.value if s.name == "rabbitmq.username"][0]
+            value = local.username
           }
 
           env {
@@ -83,25 +104,102 @@ resource "kubernetes_deployment" "calc" {
   ]
 }
 
-resource "kubernetes_horizontal_pod_autoscaler" "calc" {
+resource "kubernetes_manifest" "rabbitmq" {
+  manifest = {
+    apiVersion = "monitoring.coreos.com/v1"
+    kind       = "ServiceMonitor"
+
+    metadata = {
+      name      = "rabbitmq-service-monitor"
+      namespace = "default"
+
+      labels = {
+        team = "backend"
+      }
+    }
+
+    spec = {
+      selector = {
+        matchLabels = {
+          "app.kubernetes.io/name" = "rabbitmq"
+        }
+      }
+
+      endpoints = [{
+        port     = "metrics"
+        interval = "5s"
+        path     = "/metrics"
+      }]
+    }
+  }
+
+  depends_on = [
+    helm_release.rabbitmq
+  ]
+}
+
+resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
   metadata {
-    name      = "calc-hpa"
-    namespace = "default"
+    name = "calc-hpa"
   }
 
   spec {
     max_replicas = 10
-    min_replicas = 2
+    min_replicas = 1
+
     scale_target_ref {
       api_version = "apps/v1"
       kind        = "Deployment"
       name        = "calc"
     }
 
-    target_cpu_utilization_percentage = 80
+    metric {
+      type = "Object"
+
+      object {
+        metric {
+          name = "rabbitmq_queue_messages_ready"
+        }
+
+        described_object {
+          api_version = "v1"
+          kind        = "Service"
+          name        = "rabbitmq"
+        }
+        target {
+          type          = "AverageValue"
+          average_value = 10
+        }
+      }
+    }
   }
 
   depends_on = [
-    kubernetes_deployment.calc
+    kubernetes_deployment.calc,
+    helm_release.rabbitmq
+  ]
+}
+
+resource "kubernetes_config_map" "prometheus_adapter_config" {
+  metadata {
+    name = "prometheus-adapter-config"
+  }
+
+  data = {
+    "config.yaml" = <<-EOL
+      rules:
+        - seriesQuery: 'rabbitmq_queue_messages_ready{job="kubernetes-pods"}'
+          resources:
+            overrides:
+              kubernetes_namespace: {resource: "namespace"}
+              kubernetes_pod_name: {resource: "pod"}
+          name:
+            as: "rabbitmq_queue_messages_ready"
+          metricsQuery: 'sum(rate(rabbitmq_queue_messages_ready{job="kubernetes-pods"}[5m])) by (namespace)'
+    EOL
+  }
+
+  depends_on = [
+    helm_release.prometheus-adapter
   ]
 }

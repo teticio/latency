@@ -2,6 +2,8 @@
 
 The purpose of this repo is to compare the performance of various architectures for a simple web application with a backend that keeps track of the number of times it has been called. It should be fairly straightforward to adapt to your specific needs.
 
+**UPDATE:** New section on queues.
+
 Each architecture can be built by running
 ```
 terraform apply
@@ -58,4 +60,6 @@ The cost estimates are based on current AWS pricing for the region `eu-west-2` a
 
 Now let's suppose we have a function `calc` that takes a parameter `x` and takes `x` seconds to return `x`. We might want to use a queue to run many calculations in parallel.
 
-* **Lambda Python + SQS** (`9-lambda-python-sqs`). Serverless architecture. API Gateway posts a message to an SQS queue which triggers a Python Lambda function that runs the calculation and then increments a counter in a DynamoDB table. To test it, `python test\sqs.py 1000 2` will run 1000 "calculations" that take a random time to complete between 0 and 2 seconds.
+* **Lambda Python + SQS** (`9-lambda-python-sqs`). Serverless architecture. API Gateway posts a message to an SQS queue which triggers a Python Lambda function that runs the calculation and then increments a counter in a DynamoDB table. To test it, `python test/sqs.py 1000 2` will run 1000 "calculations" that take a random time to complete between 0 and 2 seconds.
+
+* **EKS + RabbitMQ** (`10-eks-rabbitmq`). This time, we use AWS EKS to create a cluster with RabbitMQ and Prometheus (for custom metrics) and a Horizontal Pod Autoscaler (HPA) that spawns our `calc` Deployment according to the length of the RabbitMQ queue. To test it, `python test/rabbitmq.py 1000 2` will run 1000 "calculations" that take a random time to complete between 0 and 2 seconds.
