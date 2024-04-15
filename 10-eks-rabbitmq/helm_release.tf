@@ -74,6 +74,11 @@ resource "helm_release" "rabbitmq" {
     value = "true"
   }
 
+  set {
+    name  = "podLabels.app"
+    value = "calc"
+  }
+  
   depends_on = [helm_release.prometheus-operator]
 }
 

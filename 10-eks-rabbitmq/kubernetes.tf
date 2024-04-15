@@ -154,18 +154,13 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
     }
 
     metric {
-      type = "Object"
+      type = "Pods"
 
-      object {
+      pods {
         metric {
           name = "rabbitmq_queue_messages_ready"
         }
 
-        described_object {
-          api_version = "v1"
-          kind        = "Service"
-          name        = "rabbitmq"
-        }
         target {
           type          = "AverageValue"
           average_value = 10
