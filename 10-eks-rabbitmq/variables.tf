@@ -1,4 +1,3 @@
-variable "tag" {
-  type    = string
-  default = "latency-eks-rabbitmq"
+variable "url" {
+    type = string  
 }

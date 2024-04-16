@@ -71,7 +71,10 @@ async def main(args):
 
     start = time()
     with tqdm(total=args.calculations) as progress:
-        tasks = [calc(random.uniform(0, args.max), progress) for _ in range(args.calculations)]
+        tasks = [
+            calc(random.uniform(0, args.max), progress)
+            for _ in range(args.calculations)
+        ]
         await asyncio.gather(*tasks)
 
     print(f"{time() - start:.2f} seconds")

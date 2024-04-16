@@ -1,8 +1,3 @@
-variable "tag" {
-  type    = string
-  default = "latency-fastapi-ec2"
-}
-
 variable "ami" {
   type    = string
   default = "ami-0194c3e07668a7e36"

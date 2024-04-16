@@ -1,24 +1,12 @@
-terraform {
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-    }
-  }
-}
-
-provider "aws" {
-  profile = "default"
-  region  = var.region
-}
-
 module "app" {
-  #  source = "./1-fastapi-ec2"
+   source = "./1-fastapi-ec2"
   #  source = "./2-lambda-s3"
   #  source = "./3-lambda-python-dynamodb"
   #  source = "./4-lambda-js-dynamodb"
   #  source = "./5-lambda-c++-dynamodb"
   #  source = "./6-lambda-rust-dynamodb"
   #  source = "./7-fargate-ecs"
+  #  cd 8-k8s && deploy.sh <your Route53 managed domain>
   #  source = "./9-lambda-sqs"
-  source = "./10-eks-rabbitmq"
+  #  cd 10-eks-rabbitmq && terragrunt run-all apply
 }

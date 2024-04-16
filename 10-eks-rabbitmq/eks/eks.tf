@@ -1,31 +1,36 @@
 data "aws_vpc" "default" {
+  count   = var.vpc_id == "" ? 1 : 0
   default = true
 }
 
-data "aws_subnets" "default" {
+locals {
+  vpc_id = var.vpc_id == "" ? tolist(data.aws_vpc.default.*.id)[0] : var.vpc_id
+}
+
+data "aws_subnets" "this" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+    values = [local.vpc_id]
   }
 }
 
 resource "aws_ec2_tag" "elb_tag" {
-  count       = length(data.aws_subnets.default.ids)
-  resource_id = data.aws_subnets.default.ids[count.index]
+  count       = length(data.aws_subnets.this.ids)
+  resource_id = data.aws_subnets.this.ids[count.index]
   key         = "kubernetes.io/role/elb"
   value       = "1"
 }
 
 resource "aws_ec2_tag" "internal_elb_tag" {
-  count       = length(data.aws_subnets.default.ids)
-  resource_id = data.aws_subnets.default.ids[count.index]
+  count       = length(data.aws_subnets.this.ids)
+  resource_id = data.aws_subnets.this.ids[count.index]
   key         = "kubernetes.io/role/internal-elb"
   value       = "1"
 }
 
 data "local_file" "policy" {
-  # from https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json
-  filename = "${path.module}/policy.aws-loadbalancer-controller.json"
+  # From https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json
+  filename = "${path.module}/iam_policy.json"
 }
 
 resource "aws_iam_policy" "loadbalancer_controller_policy" {
@@ -38,9 +43,9 @@ module "eks" {
   cluster_name                             = "latency"
   cluster_version                          = "1.29"
   cluster_endpoint_public_access           = true
-  vpc_id                                   = data.aws_vpc.default.id
-  subnet_ids                               = data.aws_subnets.default.ids
-  control_plane_subnet_ids                 = data.aws_subnets.default.ids
+  vpc_id                                   = local.vpc_id
+  subnet_ids                               = data.aws_subnets.this.ids
+  control_plane_subnet_ids                 = data.aws_subnets.this.ids
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_groups = {
@@ -63,10 +68,6 @@ module "eks" {
       most_recent = true
     }
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "null_resource" "update_kubeconfig" {
@@ -75,4 +76,8 @@ resource "null_resource" "update_kubeconfig" {
   }
 
   depends_on = [module.eks]
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
 }

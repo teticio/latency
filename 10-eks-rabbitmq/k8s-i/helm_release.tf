@@ -1,16 +1,3 @@
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
-      command     = "aws"
-    }
-  }
-}
-
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -19,7 +6,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set {
     name  = "clusterName"
-    value = module.eks.cluster_name
+    value = var.cluster_name
   }
 }
 
@@ -32,6 +19,7 @@ resource "helm_release" "rabbitmq" {
   name       = "rabbitmq"
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "rabbitmq"
+  timeout    = 600
 
   set {
     name  = "replicaCount"
@@ -78,31 +66,15 @@ resource "helm_release" "rabbitmq" {
     name  = "podLabels.app"
     value = "calc"
   }
-  
+
   depends_on = [helm_release.prometheus-operator]
-}
-
-resource "kubernetes_annotations" "rabbitmq" {
-  api_version = "v1"
-  kind        = "Service"
-
-  metadata {
-    name = "rabbitmq"
-  }
-
-  annotations = {
-    "service.beta.kubernetes.io/aws-load-balancer-type"            = "external"
-    "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
-    "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
-  }
-
-  depends_on = [helm_release.rabbitmq]
 }
 
 resource "helm_release" "prometheus" {
   name       = "prometheus"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
+  timeout    = 600
 }
 
 resource "helm_release" "prometheus-operator" {

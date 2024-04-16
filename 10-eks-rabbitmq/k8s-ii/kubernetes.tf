@@ -1,43 +1,13 @@
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
-    command     = "aws"
-  }
-}
-
-data "aws_eks_cluster_auth" "main" {
-  name = module.eks.cluster_name
-}
-
-# provider "kubectl" {
-#   host                   = module.eks.cluster_endpoint
-#   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-#   token                  = data.aws_eks_cluster_auth.main.token
-#   load_config_file       = false
-# }
-
 data "kubernetes_service" "rabbitmq" {
   metadata {
     name = "rabbitmq"
   }
-
-  depends_on = [
-    helm_release.rabbitmq
-  ]
 }
 
 data "kubernetes_secret" "rabbitmq" {
   metadata {
     name = "rabbitmq"
   }
-
-  depends_on = [
-    helm_release.rabbitmq
-  ]
 }
 
 resource "kubernetes_deployment" "calc" {
@@ -81,7 +51,7 @@ resource "kubernetes_deployment" "calc" {
 
           env {
             name  = "RABBITMQ_USERNAME"
-            value = local.username
+            value = var.rabbitmq_username
           }
 
           env {
@@ -104,6 +74,7 @@ resource "kubernetes_deployment" "calc" {
   ]
 }
 
+# This cannot even be planned if prometheus-operator is not installed
 resource "kubernetes_manifest" "rabbitmq" {
   manifest = {
     apiVersion = "monitoring.coreos.com/v1"
@@ -132,10 +103,6 @@ resource "kubernetes_manifest" "rabbitmq" {
       }]
     }
   }
-
-  depends_on = [
-    helm_release.rabbitmq
-  ]
 }
 
 resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
@@ -170,8 +137,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
   }
 
   depends_on = [
-    kubernetes_deployment.calc,
-    helm_release.rabbitmq
+    kubernetes_deployment.calc
   ]
 }
 
@@ -193,8 +159,4 @@ resource "kubernetes_config_map" "prometheus_adapter_config" {
           metricsQuery: 'sum(rate(rabbitmq_queue_messages_ready{job="kubernetes-pods"}[5m])) by (namespace)'
     EOL
   }
-
-  depends_on = [
-    helm_release.prometheus-adapter
-  ]
 }

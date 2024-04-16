@@ -1,16 +1,24 @@
 data "aws_region" "current" {}
 
-data "aws_vpc" "this" {
+data "aws_vpc" "default" {
+  count   = var.vpc_id == "" ? 1 : 0
   default = true
 }
 
-data "aws_subnet_ids" "this" {
-  vpc_id = data.aws_vpc.this.id
+locals {
+  vpc_id = var.vpc_id == "" ? tolist(data.aws_vpc.default.*.id)[0] : var.vpc_id
+}
+
+data "aws_subnets" "this" {
+  filter {
+    name   = "vpc-id"
+    values = [local.vpc_id]
+  }
 }
 
 resource "aws_security_group" "http" {
   name   = "http"
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = local.vpc_id
 
   ingress {
     description = "HTTP"
@@ -19,15 +27,11 @@ resource "aws_security_group" "http" {
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_security_group" "https" {
   name   = "https"
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = local.vpc_id
 
   ingress {
     description = "HTTPS"
@@ -36,15 +40,11 @@ resource "aws_security_group" "https" {
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_security_group" "egress_all" {
   name   = "egress_all"
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = local.vpc_id
 
   egress {
     from_port   = 0
@@ -52,15 +52,11 @@ resource "aws_security_group" "egress_all" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_security_group" "ingress_api" {
   name   = "ingress_api"
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = local.vpc_id
 
   ingress {
     description = "API"
@@ -69,15 +65,11 @@ resource "aws_security_group" "ingress_api" {
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_security_group" "efs" {
   name   = "efs"
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = local.vpc_id
 
   ingress {
     description = "NFS"
@@ -86,37 +78,29 @@ resource "aws_security_group" "efs" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_ecs_cluster" "this" {
-  name               = "latency"
-  capacity_providers = ["FARGATE_SPOT", "FARGATE"]
+  name = "latency"
+}
+
+resource "aws_ecs_cluster_capacity_providers" "this" {
+  cluster_name       = aws_ecs_cluster.this.name
+  capacity_providers = ["FARGATE"]
 
   default_capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-  }
-
-  tags = {
-    Name = var.tag
+    capacity_provider = "FARGATE"
   }
 }
 
 resource "aws_efs_access_point" "this" {
   file_system_id = aws_efs_file_system.this.id
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_efs_mount_target" "this" {
-  count          = length(data.aws_subnet_ids.this.ids)
+  count          = length(data.aws_subnets.this.ids)
   file_system_id = aws_efs_file_system.this.id
-  subnet_id      = sort(data.aws_subnet_ids.this.ids)[count.index]
+  subnet_id      = sort(data.aws_subnets.this.ids)[count.index]
 
   security_groups = [
     aws_security_group.efs.id,
@@ -126,10 +110,6 @@ resource "aws_efs_mount_target" "this" {
 
 resource "aws_cloudwatch_log_group" "this" {
   name = "/ecs/latency"
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_ecs_service" "this" {
@@ -147,58 +127,50 @@ resource "aws_ecs_service" "this" {
 
   network_configuration {
     assign_public_ip = true
-    subnets          = data.aws_subnet_ids.this.ids
+    subnets          = data.aws_subnets.this.ids
 
     security_groups = [
       aws_security_group.egress_all.id,
       aws_security_group.ingress_api.id
     ]
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_efs_file_system" "this" {
   creation_token = "latency"
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_ecs_task_definition" "this" {
   family = "latency"
 
-  container_definitions = <<EOF
-[{
-  "name": "latency",
-  "image": "teticio/latency:latest",
-  "environment": [
-    {
-      "name": "COUNT_FILE",
-      "value": "/mnt/efs/count"
-    }
-  ],
-  "portMappings": [{
-    "containerPort": 8000
-  }],
-  "logConfiguration": {
-    "logDriver": "awslogs",
-    "options": {
-      "awslogs-region": "${data.aws_region.current.name}",
-      "awslogs-group": "/ecs/latency",
-      "awslogs-stream-prefix": "ecs"
-    }
-  },
-  "mountPoints": [{
-    "sourceVolume": "${aws_efs_file_system.this.creation_token}",
-    "containerPath": "/mnt/efs",
-    "readOnly": false
-  }]
-}]
-  EOF
+  container_definitions = <<-EOL
+    [{
+      "name": "latency",
+      "image": "teticio/latency:latest",
+      "environment": [
+        {
+          "name": "COUNT_FILE",
+          "value": "/mnt/efs/count"
+        }
+      ],
+      "portMappings": [{
+        "containerPort": 8000
+      }],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-region": "${data.aws_region.current.name}",
+          "awslogs-group": "/ecs/latency",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "mountPoints": [{
+        "sourceVolume": "${aws_efs_file_system.this.creation_token}",
+        "containerPath": "/mnt/efs",
+        "readOnly": false
+      }]
+    }]
+  EOL
 
   volume {
     name = "latency"
@@ -214,18 +186,11 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
 
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_iam_role" "task_execution_role" {
   name               = "latency-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 data "aws_iam_policy_document" "ecs_task_assume_role" {
@@ -253,7 +218,7 @@ resource "aws_lb_target_group" "this" {
   port        = 8000
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = data.aws_vpc.this.id
+  vpc_id      = local.vpc_id
 
   health_check {
     enabled = true
@@ -261,27 +226,19 @@ resource "aws_lb_target_group" "this" {
   }
 
   depends_on = [aws_alb.this]
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_alb" "this" {
   name               = "latency"
   internal           = false
   load_balancer_type = "application"
-  subnets            = data.aws_subnet_ids.this.ids
+  subnets            = data.aws_subnets.this.ids
 
   security_groups = [
     aws_security_group.http.id,
     aws_security_group.https.id,
     aws_security_group.egress_all.id,
   ]
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_alb_listener" "http" {
@@ -292,9 +249,5 @@ resource "aws_alb_listener" "http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.this.arn
-  }
-
-  tags = {
-    Name = var.tag
   }
 }

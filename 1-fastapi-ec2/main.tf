@@ -6,10 +6,6 @@ module "key_pair" {
   source     = "terraform-aws-modules/key-pair/aws"
   key_name   = "latency"
   public_key = tls_private_key.this.public_key_openssh
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_security_group" "latency" {
@@ -36,10 +32,6 @@ resource "aws_security_group" "latency" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = var.tag
   }
 }
 
@@ -77,9 +69,5 @@ resource "aws_instance" "ec2" {
       "chmod +x bootstrap.sh",
       "./bootstrap.sh"
     ]
-  }
-
-  tags = {
-    Name = var.tag
   }
 }

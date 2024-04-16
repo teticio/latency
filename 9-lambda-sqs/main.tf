@@ -1,4 +1,4 @@
-# with help from https://gist.github.com/afloesch/dc7d8865eeb91100648330a46967be25
+# With help from https://gist.github.com/afloesch/dc7d8865eeb91100648330a46967be25
 
 data "aws_region" "current" {}
 
@@ -42,10 +42,6 @@ module "lambda_function" {
       source_arn = aws_sqs_queue.queue.arn
     }
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_dynamodb_table" "dynamodb" {
@@ -57,18 +53,10 @@ resource "aws_dynamodb_table" "dynamodb" {
     name = "id"
     type = "N"
   }
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_sqs_queue" "dead_letter_queue" {
   name = "latency-dead-letter-queue"
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_sqs_queue" "queue" {
@@ -83,10 +71,6 @@ resource "aws_sqs_queue" "queue" {
     deadLetterTargetArn = aws_sqs_queue.dead_letter_queue.arn
     maxReceiveCount     = 1
   })
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_lambda_event_source_mapping" "queue" {
@@ -110,10 +94,6 @@ resource "aws_iam_role" "api" {
       }
     ]
   })
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_iam_policy" "api" {
@@ -131,10 +111,6 @@ resource "aws_iam_policy" "api" {
       },
     ],
   })
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "api" {
@@ -144,10 +120,6 @@ resource "aws_iam_role_policy_attachment" "api" {
 
 resource "aws_api_gateway_rest_api" "api" {
   name = "latency"
-
-  tags = {
-    Name = var.tag
-  }
 }
 
 resource "aws_api_gateway_method" "api" {
