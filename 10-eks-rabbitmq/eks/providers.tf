@@ -9,7 +9,7 @@ terraform {
 provider "aws" {
   default_tags {
     tags = {
-      Name = "latency-fastapi-ec2"
+      Name = "latency-eks-rabbitmq"
     }
   }
 }
