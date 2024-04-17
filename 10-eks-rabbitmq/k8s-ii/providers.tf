@@ -17,7 +17,7 @@ terraform {
 provider "aws" {
   default_tags {
     tags = {
-      Name = "latency-eks-rabbitmq"
+      Name = "latency-fastapi-ec2"
     }
   }
 }
@@ -36,8 +36,16 @@ provider "docker" {
   }
 }
 
+data aws_eks_cluster "this" {
+  name = var.cluster_name
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = var.cluster_name
+}
+
 provider "kubernetes" {
-  host                   = var.cluster_endpoint
-  token                  = var.cluster_token
-  cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
+  host                   = data.aws_eks_cluster.this.endpoint
+  token                  = data.aws_eks_cluster_auth.this.token
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority.0.data)
 }

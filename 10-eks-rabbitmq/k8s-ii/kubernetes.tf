@@ -1,3 +1,34 @@
+# This cannot even be planned if prometheus-operator is not installed
+resource "kubernetes_manifest" "rabbitmq" {
+  manifest = {
+    apiVersion = "monitoring.coreos.com/v1"
+    kind       = "ServiceMonitor"
+
+    metadata = {
+      name      = "rabbitmq-service-monitor"
+      namespace = "default"
+
+      labels = {
+        team = "backend"
+      }
+    }
+
+    spec = {
+      selector = {
+        matchLabels = {
+          "app.kubernetes.io/name" = "rabbitmq"
+        }
+      }
+
+      endpoints = [{
+        port     = "metrics"
+        interval = "5s"
+        path     = "/metrics"
+      }]
+    }
+  }
+}
+
 data "kubernetes_service" "rabbitmq" {
   metadata {
     name = "rabbitmq"
@@ -74,37 +105,6 @@ resource "kubernetes_deployment" "calc" {
   ]
 }
 
-# This cannot even be planned if prometheus-operator is not installed
-resource "kubernetes_manifest" "rabbitmq" {
-  manifest = {
-    apiVersion = "monitoring.coreos.com/v1"
-    kind       = "ServiceMonitor"
-
-    metadata = {
-      name      = "rabbitmq-service-monitor"
-      namespace = "default"
-
-      labels = {
-        team = "backend"
-      }
-    }
-
-    spec = {
-      selector = {
-        matchLabels = {
-          "app.kubernetes.io/name" = "rabbitmq"
-        }
-      }
-
-      endpoints = [{
-        port     = "metrics"
-        interval = "5s"
-        path     = "/metrics"
-      }]
-    }
-  }
-}
-
 resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
   metadata {
     name = "calc-hpa"
@@ -130,7 +130,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
 
         target {
           type          = "AverageValue"
-          average_value = 10
+          average_value = 1
         }
       }
     }

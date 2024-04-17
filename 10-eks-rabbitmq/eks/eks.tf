@@ -28,6 +28,13 @@ resource "aws_ec2_tag" "internal_elb_tag" {
   value       = "1"
 }
 
+resource "aws_ec2_tag" "karpenter_discovery_tag" {
+  count       = length(data.aws_subnets.this.ids)
+  resource_id = data.aws_subnets.this.ids[count.index]
+  key         = "karpenter.sh/discovery"
+  value       = "latency"
+}
+
 data "local_file" "policy" {
   # From https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json
   filename = "${path.module}/iam_policy.json"
@@ -50,11 +57,11 @@ module "eks" {
 
   eks_managed_node_groups = {
     node_group = {
-      min_size       = 1
-      max_size       = 3
-      desired_size   = 1
-      instance_types = ["t3.large"]
-      capacity_type  = "SPOT"
+      min_size              = 1
+      max_size              = 3
+      desired_size          = 1
+      instance_types        = ["t3.large"]
+      capacity_type         = "SPOT"
 
       iam_role_additional_policies = {
         ebs_csi_driver_policy           = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
@@ -67,6 +74,10 @@ module "eks" {
     aws-ebs-csi-driver = {
       most_recent = true
     }
+  }
+
+  tags = {
+    "karpenter.sh/discovery" = "latency"
   }
 }
 

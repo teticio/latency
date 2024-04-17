@@ -4,6 +4,10 @@ terraform {
       source = "hashicorp/aws"
     }
 
+    kubectl = {
+      source = "alekc/kubectl"
+    }
+
     kubernetes = {
       source = "hashicorp/kubernetes"
     }
@@ -22,16 +26,31 @@ provider "aws" {
   }
 }
 
+data aws_eks_cluster "this" {
+  name = var.cluster_name
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = var.cluster_name
+}
+
+provider "kubectl" {
+  host                   = data.aws_eks_cluster.this.endpoint
+  token                  = data.aws_eks_cluster_auth.this.token
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority.0.data)
+  load_config_file       = false
+}
+
 provider "kubernetes" {
-  host                   = var.cluster_endpoint
-  token                  = var.cluster_token
-  cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
+  host                   = data.aws_eks_cluster.this.endpoint
+  token                  = data.aws_eks_cluster_auth.this.token
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority.0.data)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = var.cluster_endpoint
-    token                  = var.cluster_token
-    cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
+    host                   = data.aws_eks_cluster.this.endpoint
+    token                  = data.aws_eks_cluster_auth.this.token
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority.0.data)
   }
 }
