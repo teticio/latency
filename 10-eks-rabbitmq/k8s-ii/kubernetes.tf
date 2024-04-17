@@ -130,7 +130,20 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
 
         target {
           type          = "AverageValue"
-          average_value = 1
+          average_value = 10
+        }
+      }
+    }
+
+    behavior {
+      scale_down {
+        stabilization_window_seconds = 60
+        select_policy                = "Max"
+
+        policy {
+          type           = "Pods"
+          value          = 1
+          period_seconds = 10
         }
       }
     }
@@ -139,24 +152,4 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
   depends_on = [
     kubernetes_deployment.calc
   ]
-}
-
-resource "kubernetes_config_map" "prometheus_adapter_config" {
-  metadata {
-    name = "prometheus-adapter-config"
-  }
-
-  data = {
-    "config.yaml" = <<-EOL
-      rules:
-        - seriesQuery: 'rabbitmq_queue_messages_ready{job="kubernetes-pods"}'
-          resources:
-            overrides:
-              kubernetes_namespace: {resource: "namespace"}
-              kubernetes_pod_name: {resource: "pod"}
-          name:
-            as: "rabbitmq_queue_messages_ready"
-          metricsQuery: 'sum(rate(rabbitmq_queue_messages_ready{job="kubernetes-pods"}[5m])) by (namespace)'
-    EOL
-  }
 }
