@@ -26,7 +26,7 @@ class RpcClient:
         self.futures = {}
 
     async def connect(self):
-        url = terraform_output("terraform.tfstate", "url")
+        url = terraform_output("10-eks-rabbitmq/terraform.tfstate", "url")
         self.connection = await aio_pika.connect_robust(url=url, loop=self.loop)
 
         self.channel = await self.connection.channel()
