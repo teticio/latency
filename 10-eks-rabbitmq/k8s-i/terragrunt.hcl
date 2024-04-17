@@ -3,5 +3,5 @@ dependency "eks" {
 }
 
 inputs = {
-  cluster_name           = dependency.eks.outputs.cluster_name
+  cluster_name = dependency.eks.outputs.cluster_name
 }
