@@ -6,7 +6,7 @@ module "app" {
   #  source = "./5-lambda-c++-dynamodb"
   #  source = "./6-lambda-rust-dynamodb"
   #  source = "./7-fargate-ecs"
-  #  cd 8-k8s && deploy.sh <your Route53 managed domain>
+  #  8-k8s/deploy.sh <your Route53 managed domain>
   #  source = "./9-lambda-sqs"
-  #  cd 10-eks-rabbitmq && terragrunt run-all apply
+  #  terragrunt run-all apply
 }
