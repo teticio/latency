@@ -67,7 +67,10 @@ resource "helm_release" "rabbitmq" {
     value = "calc"
   }
 
-  depends_on = [helm_release.prometheus-operator]
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    helm_release.prometheus-operator
+  ]
 }
 
 resource "helm_release" "prometheus" {
@@ -75,6 +78,10 @@ resource "helm_release" "prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
   timeout    = 600
+
+  depends_on = [
+    helm_release.aws_load_balancer_controller
+  ]
 }
 
 resource "helm_release" "prometheus-operator" {

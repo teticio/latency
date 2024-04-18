@@ -134,19 +134,6 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "calc" {
         }
       }
     }
-
-    behavior {
-      scale_down {
-        stabilization_window_seconds = 60
-        select_policy                = "Max"
-
-        policy {
-          type           = "Pods"
-          value          = 1
-          period_seconds = 10
-        }
-      }
-    }
   }
 
   depends_on = [
