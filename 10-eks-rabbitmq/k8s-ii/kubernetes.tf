@@ -1,34 +1,3 @@
-# This cannot even be planned if prometheus-operator is not installed
-resource "kubernetes_manifest" "rabbitmq" {
-  manifest = {
-    apiVersion = "monitoring.coreos.com/v1"
-    kind       = "ServiceMonitor"
-
-    metadata = {
-      name      = "rabbitmq-service-monitor"
-      namespace = "default"
-
-      labels = {
-        team = "backend"
-      }
-    }
-
-    spec = {
-      selector = {
-        matchLabels = {
-          "app.kubernetes.io/name" = "rabbitmq"
-        }
-      }
-
-      endpoints = [{
-        port     = "metrics"
-        interval = "5s"
-        path     = "/metrics"
-      }]
-    }
-  }
-}
-
 data "kubernetes_service" "rabbitmq" {
   metadata {
     name = "rabbitmq"

@@ -57,6 +57,11 @@ resource "helm_release" "rabbitmq" {
   }
 
   set {
+    name  = "metrics.serviceMonitor.interval"
+    value = "5s"
+  }
+
+  set {
     # https://stackoverflow.com/questions/60407082/rabbit-mq-error-while-waiting-for-mnesia-tables
     name  = "clustering.forceBoot"
     value = "true"
