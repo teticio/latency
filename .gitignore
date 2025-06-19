@@ -8,6 +8,6 @@ package.json
 package-lock.json
 node_modules
 */build/*
-!*/build/latency.zip
+!*/build/lambda.zip
 target
 .terragrunt-cache

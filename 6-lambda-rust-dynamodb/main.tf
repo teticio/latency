@@ -61,7 +61,7 @@ module "lambda_function" {
   source                 = "terraform-aws-modules/lambda/aws"
   function_name          = "hits"
   handler                = "foobar"
-  runtime                = "provided"
+  runtime                = "provided.al2023"
   attach_policy_json     = true
   publish                = true
   create_package         = false
