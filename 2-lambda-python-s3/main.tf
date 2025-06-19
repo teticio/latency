@@ -1,13 +1,46 @@
 data "aws_region" "current" {}
 
+resource "random_string" "bucket_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
 resource "aws_s3_bucket" "bucket" {
-  bucket        = "latency-lambda-s3"
+  bucket        = "latency-lambda-s3-${random_string.bucket_suffix.result}"
   force_destroy = true
+}
+
+resource "aws_s3_bucket_public_access_block" "public_access_block" {
+  bucket                  = aws_s3_bucket.bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.bucket.id
+
+  policy = <<-EOL
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::${aws_s3_bucket.bucket.bucket}/index.html"
+        }
+      ]
+    }
+  EOL
+
+  depends_on = [aws_s3_bucket_public_access_block.public_access_block]
 }
 
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.bucket.bucket
-  acl          = "public-read"
   key          = "index.html"
   source       = "${path.root}/common/index.html"
   content_type = "text/html"
@@ -39,27 +72,33 @@ module "lambda_function" {
   allowed_triggers = {
     AllowExecutionFromAPIGateway = {
       service    = "apigateway"
-      source_arn = "${module.api_gateway.apigatewayv2_api_execution_arn}/*/*/*"
+      source_arn = "${module.api_gateway.api_execution_arn}/*/*/*"
     }
   }
 }
 
 module "api_gateway" {
-  source                 = "terraform-aws-modules/apigateway-v2/aws"
-  name                   = "latency"
-  description            = "app"
-  protocol_type          = "HTTP"
-  create_api_domain_name = false
+  source             = "terraform-aws-modules/apigateway-v2/aws"
+  name               = "latency"
+  description        = "app"
+  protocol_type      = "HTTP"
+  create_domain_name = false
 
-  integrations = {
+  routes = {
     "GET /" = {
-      integration_uri    = "https://${aws_s3_bucket.bucket.id}.s3.${data.aws_region.current.name}.amazonaws.com/${aws_s3_object.index.id}"
-      integration_type   = "HTTP_PROXY"
-      integration_method = "GET"
+      integration = {
+        type   = "HTTP_PROXY"
+        uri    = "https://${aws_s3_bucket.bucket.id}.s3.${data.aws_region.current.region}.amazonaws.com/${aws_s3_object.index.id}"
+        method = "GET"
+      }
     }
 
     "GET /hits" = {
-      lambda_arn = module.lambda_function.lambda_function_arn
+      integration = {
+        type   = "AWS_PROXY"
+        uri    = "${module.lambda_function.lambda_function_arn}"
+        method = "GET"
+      }
     }
   }
 }

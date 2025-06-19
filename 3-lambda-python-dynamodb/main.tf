@@ -104,6 +104,7 @@ module "api_gateway" {
         method = "GET"
       }
     }
+
     "GET /hits" = {
       integration = {
         type   = "AWS_PROXY"
